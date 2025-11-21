@@ -70,7 +70,7 @@ App<IAppOptionExtended>({
           return { ...options };
         },
       },
-      "H5"
+      "WeChat"
     );
 
     // 将nim、store挂载到全局
