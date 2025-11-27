@@ -87,10 +87,13 @@ Component({
         return !!conversation.mute
       }
       const app = getApp() as any
-      const store = app?.globalData?.store
+      const store = app && app.globalData ? app.globalData.store : null
       if (!store) return false
       if (conversation.type === 'P2P') {
-        return Array.isArray(store.relationStore?.mutes) && store.relationStore.mutes.includes(to)
+        const mutes = store && store.relationStore && store.relationStore.mutes
+          ? store.relationStore.mutes
+          : null
+        return Array.isArray(mutes) && mutes.includes(to)
       }
       return false
     },

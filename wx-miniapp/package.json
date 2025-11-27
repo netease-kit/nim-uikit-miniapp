@@ -2,7 +2,9 @@
   "name": "miniprogram-ts-less-quickstart",
   "version": "1.0.0",
   "description": "",
-  "scripts": {},
+  "scripts": {
+    "build": "webpack --config webpack.config.js"
+  },
   "keywords": [],
   "author": "",
   "license": "",
@@ -11,10 +13,12 @@
     "@xkit-yx/utils": "^0.5.6",
     "dayjs": "^1.11.7",
     "mitt": "^3.0.1",
-    "nim-web-sdk-ng": "^10.8.30"
+    "nim-web-sdk-ng": "^10.9.30"
   },
   "devDependencies": {
     "miniprogram-api-typings": "^2.8.3-1",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4"
   }
 }

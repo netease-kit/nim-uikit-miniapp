@@ -1,10 +1,9 @@
 import { getLoginSmsCode, loginRegisterByCode, validateMobile, validateSmsCode } from '../utils/api'
 import { t } from '../i18n/index'
-const { V2NIMConst } = require('../../../libs/NIM_MINIAPP_SDK.js')
-const { default: RootStore } = require('../../../libs/store.js')
 
 Component({
   properties: {
+    // 可以接收外部传入的属性
   },
 
   data: {
@@ -187,28 +186,6 @@ Component({
           icon: 'none'
         });
         return;
-      }
-
-      // 重新初始化 Store，避免退出后 Store 被销毁导致列表不更新
-      try {
-        const store = new RootStore(
-          // @ts-ignore
-          nim,
-          {
-            addFriendNeedVerify: false,
-            p2pMsgReceiptVisible: true,
-            teamMsgReceiptVisible: true,
-            teamAgreeMode: V2NIMConst.V2NIMTeamAgreeMode.V2NIM_TEAM_AGREE_MODE_NO_AUTH,
-            sendMsgBefore: async (options: { msg: any; conversationId: string; serverExtension?: Record<string, unknown> }) => {
-              return { ...options }
-            },
-          },
-          'WeChat'
-        )
-        // 挂载到全局，供会话列表等组件使用
-        app.globalData.store = store
-      } catch (e) {
-        console.warn('重建 Store 失败：', e)
       }
 
       wx.showLoading({

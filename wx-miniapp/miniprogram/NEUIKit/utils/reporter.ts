@@ -10,7 +10,7 @@ export const trackInit = (
     version: "10.0.0",
     component,
     imVersion: imPkg.version,
-    platform: "H5",
+    platform: "MiniApp",
   });
   eventTracking.track("init", "");
 };

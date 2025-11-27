@@ -18,7 +18,7 @@ Page({
     if (options.to) {
       const account = options.to;
       const app = getApp() as any;
-      const nim = app?.globalData?.nim;
+      const nim = app && app.globalData ? app.globalData.nim : null;
       const conversationId = (nim && nim.V2NIMConversationIdUtil && nim.V2NIMConversationIdUtil.p2pConversationId)
         ? nim.V2NIMConversationIdUtil.p2pConversationId(account)
         : `p2p|${account}`;

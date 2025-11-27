@@ -152,12 +152,9 @@ Component({
           })
           return
         }
-        
-        // 获取V2NIMConst
-        const { V2NIMConst } = require('../../../libs/NIM_MINIAPP_SDK.js')
-        
+                
         await store.friendStore.addFriendActive(account, {
-          addMode: V2NIMConst.V2NIMFriendAddMode.V2NIM_FRIEND_MODE_TYPE_APPLY,
+          addMode: 2,
           postscript: ''
         })
 

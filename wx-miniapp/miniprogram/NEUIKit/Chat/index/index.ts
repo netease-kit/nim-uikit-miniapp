@@ -1046,9 +1046,16 @@ Component({
         return
       }
       
-      const sourceMsg = (selectedMessage && selectedMessage.conversationId && selectedMessage.messageClientId)
-        ? (store.msgStore.getMsg(selectedMessage.conversationId, [selectedMessage.messageClientId])?.[0] || null)
-        : null
+      let sourceMsg = null
+      if (selectedMessage && selectedMessage.conversationId && selectedMessage.messageClientId) {
+        const list = (store.msgStore.getMsg
+          ? store.msgStore.getMsg(
+              selectedMessage.conversationId,
+              [selectedMessage.messageClientId]
+            ) || []
+          : []) as any[]
+        sourceMsg = Array.isArray(list) && list.length > 0 ? list[0] : null
+      }
 
       const promises = contacts.map((contact: any) => {
         const conversationId =

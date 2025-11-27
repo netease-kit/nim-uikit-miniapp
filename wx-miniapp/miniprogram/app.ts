@@ -1,4 +1,9 @@
+// 全量引入 V2NIM 和 V2NIMConst
 const { V2NIMConst, default: V2NIM } = require("./libs/NIM_MINIAPP_SDK.js");
+
+// 从 ESM 引入 nim-web-sdk-ng 构建产物中引入 V2NIM 和 V2NIMConst
+// const { NIM: V2NIM, V2NIMConst } = require("./libs/NIM_FROM_BUILD.js");
+
 const { default: RootStore } = require("./libs/store.js");
 
 // 类型定义
@@ -70,7 +75,7 @@ App<IAppOptionExtended>({
           return { ...options };
         },
       },
-      "WeChat"
+      "MiniApp"
     );
 
     // 将nim、store挂载到全局

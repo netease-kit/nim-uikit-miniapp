@@ -200,9 +200,13 @@ Component({
             : conversationId;
 
           if (enableV2CloudConversation) {
-            await store.conversationStore?.stickTopConversationActive(convId, value);
+            if (store.conversationStore && store.conversationStore.stickTopConversationActive) {
+              await store.conversationStore.stickTopConversationActive(convId, value);
+            }
           } else {
-            await store.localConversationStore?.stickTopConversationActive(convId, value);
+            if (store.localConversationStore && store.localConversationStore.stickTopConversationActive) {
+              await store.localConversationStore.stickTopConversationActive(convId, value);
+            }
           }
 
           this.setData({ isStickTop: value });
