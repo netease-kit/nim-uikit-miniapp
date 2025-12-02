@@ -170,10 +170,8 @@ Page({
     const isOwner = team.ownerAccountId === myAccountId;
     const isManager = myMemberInfo.memberRole === 1; // V2NIM_TEAM_MEMBER_ROLE_MANAGER
     
-    // 检查群组是否允许普通成员邀请
-    const allowMemberInvite = team.inviteMode === 1; // 所有人可邀请
-    
-    return isOwner || isManager || allowMemberInvite;
+    // 页面限制：仅群主与管理员可邀请
+    return isOwner || isManager;
   },
 
   /**

@@ -37,6 +37,7 @@
         bind:deleteMsg="handleDeleteMsg"
         bind:replyMsg="handleReplyMsg"
         bind:forwardMsg="handleForwardMsg"
+        bind:resendMsg="handleResendMsg"
         bind:avatarClick="handleAvatarClick"
       />
     </view>

@@ -12,6 +12,8 @@
 }
 
 .create-team-content {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   padding: 20rpx;
   overflow-y: auto;
@@ -95,10 +97,13 @@
 
 /* 成员选择区域 */
 .member-section {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   background: white;
   border-radius: 16rpx;
   padding: 30rpx;
-  margin-bottom: 20rpx;
+  overflow-y: auto;
 }
 
 /* 已选成员列表 */

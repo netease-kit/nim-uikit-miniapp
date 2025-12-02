@@ -106,7 +106,7 @@ Page({
     this.friendListDisposer = autorun(() => {
       try {
         // 获取好友列表
-        const friends = store.uiStore.friends || [];
+        let friends = store.uiStore.friends || [];
         
         // 获取群成员列表
         const teamMembers = store.teamMemberStore.getTeamMember(teamId) || [];
@@ -118,47 +118,31 @@ Page({
         const blacklist = store.relationStore.blacklist || [];
         
         // 处理好友列表
-        const friendList = friends.map((friend: any) => {
-          const isInTeam = teamMemberIds.includes(friend.accountId);
-          const isBlacklisted = blacklist.includes(friend.accountId);
-          
-          // 使用store.uiStore.getAppellation获取正确的昵称
-          const appellation = (store && store.uiStore && store.uiStore.getAppellation) ? store.uiStore.getAppellation({ account: friend.accountId }) : null;
-          const displayName = appellation || friend.nick || friend.accountId;
-          
-          return {
-            account: friend.accountId,
-            avatar: friend.avatar,
-            nick: displayName,
-            isInTeam,
-            isBlacklisted,
-            selected: isInTeam, // 现有群成员默认勾选
-            disabled: isInTeam || isBlacklisted // 群成员和黑名单用户禁止编辑
-          };
-        });
+        // 过滤掉黑名单与本人
+        const friendList = friends
+          .filter((friend: any) => !blacklist.includes(friend.accountId) && friend.accountId !== myUserAccountId)
+          .map((friend: any) => {
+            const isInTeam = teamMemberIds.includes(friend.accountId);
+            
+            // 使用store.uiStore.getAppellation获取正确的昵称
+            const appellation = (store && store.uiStore && store.uiStore.getAppellation) ? store.uiStore.getAppellation({ account: friend.accountId }) : null;
+            const displayName = appellation || friend.nick || friend.accountId;
+            
+            return {
+              account: friend.accountId,
+              avatar: friend.avatar,
+              nick: displayName,
+              isInTeam,
+              selected: false, // 已在群内的成员不默认勾选
+              disabled: !!isInTeam // 群成员禁止编辑
+            };
+          });
 
-        // 将“自己”加入列表（禁用且勾选），确保列表也显示自己
-        if (myUserAccountId) {
-          const selfExists = friendList.some((f: any) => f.account === myUserAccountId);
-          if (!selfExists) {
-            const selfInfo = (store && store.userStore && store.userStore.myUserInfo) ? store.userStore.myUserInfo : {};
-            const selfAppellation = (store && store.uiStore && store.uiStore.getAppellation) ? store.uiStore.getAppellation({ account: myUserAccountId }) : null;
-            const selfDisplayName = selfAppellation || selfInfo.nick || myUserAccountId;
-            friendList.unshift({
-              account: myUserAccountId,
-              avatar: selfInfo.avatar,
-              nick: selfDisplayName,
-              isInTeam: true,
-              isBlacklisted: false,
-              selected: true,
-              disabled: true
-            });
-          }
-        }
+        // 不展示本人
         
-        // 初始化已选择的成员列表（包含现有群成员）
+        // 初始化已选择的成员列表（仅统计本次选择的新成员）
         const initialSelectedMembers = friendList
-          .filter((friend: any) => friend.selected)
+          .filter((friend: any) => friend.selected && !friend.isInTeam)
           .map((friend: any) => friend.account);
         
         this.setData({

@@ -1,3 +1,5 @@
+import { autorun } from '../../../libs/store'
+
 Component({
   /**
    * 组件的属性列表
@@ -45,7 +47,8 @@ Component({
     isLongPress: false,
     appellation: '',
     avatarUrl: '',
-    color: '#ccc'
+    color: '#ccc',
+    disposer: null as any
   },
 
   /**
@@ -54,9 +57,26 @@ Component({
   lifetimes: {
     attached() {
       this._initComponent();
+      const app = getApp() as any
+      const store = app && app.globalData ? app.globalData.store : null
+      if (store && store.uiStore) {
+        const disposer = autorun(() => {
+          const info = store.uiStore.getFriendWithUserNameCard(this.data.account)
+          if (info && info.accountId) {
+            this.setData({ user: info })
+            this._updateAvatarUrl()
+            this._updateAppellation()
+          }
+        })
+        this.setData({ disposer })
+      }
     },
     detached() {
-      // 清理资源
+      const { disposer } = this.data as any
+      if (disposer) {
+        disposer()
+      }
+      this.setData({ disposer: null })
     }
   },
 
@@ -92,6 +112,7 @@ Component({
             .then((userData: any) => {
               this.setData({ user: userData });
               this._updateAvatarUrl();
+              this._updateAppellation();
             })
             .catch((error: any) => {
               console.warn('获取用户信息失败:', error);
@@ -106,34 +127,20 @@ Component({
      * 更新称谓显示
      */
     _updateAppellation() {
-      const { account, teamId } = this.data;
+      const { account, user } = this.data as { account: string; user: any };
       if (!account) {
         this.setData({ appellation: '' });
         return;
       }
 
-      const app = getApp();
-      if (app && app.globalData && app.globalData.store) {
-        try {
-          const appellation = app.globalData.store.uiStore.getAppellation({
-            account,
-            teamId,
-            ignoreAlias: false,
-            nickFromMsg: ''
-          });
-          
-          // 只取前两个字符
-          const displayName = appellation ? appellation.slice(0, 2) : '';
-          this.setData({ appellation: displayName });
-        } catch (error) {
-          console.warn('获取用户称谓失败:', error);
-          // 降级处理
-          this.setData({ appellation: account ? account.slice(0, 2) : '' });
-        }
-      } else {
-        // 降级处理
-        this.setData({ appellation: account ? account.slice(0, 2) : '' });
-      }
+      const getLastTwo = (s: string) => {
+        if (!s) return '';
+        return s.length <= 2 ? s : s.slice(s.length - 2);
+      };
+
+      const nick = (user && (user.name || (user as any).nick)) || '';
+      const display = nick ? getLastTwo(nick) : getLastTwo(account);
+      this.setData({ appellation: display });
     },
 
     /**

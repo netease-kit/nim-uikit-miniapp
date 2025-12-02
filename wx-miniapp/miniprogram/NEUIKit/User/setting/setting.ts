@@ -152,9 +152,65 @@ Component({
         this.setData({
           showLogoutModal: false
         });
-        
-        // 通知父组件退出登录
-        this.triggerEvent('logout', {});
+        const app = getApp<IAppOption>();
+        const { nim, store } = (app as any).globalData || {};
+        if (store && store.uiStore && store.uiStore.selectConversation) {
+          store.uiStore.selectConversation("");
+        }
+        if (store && store.destroy) {
+          try {
+            store.destroy();
+          } catch {}
+        }
+        // 释放全局 tab 红点监听器
+        try {
+          // 兼容无可选链环境的写法
+          // @ts-ignore
+          const gd = (app as any).globalData;
+          // @ts-ignore
+          const disposerMsg = gd && gd.tabRedDotDisposerMessage;
+          // @ts-ignore
+          const disposerContacts = gd && gd.tabRedDotDisposerContacts;
+          if (typeof disposerMsg === "function") disposerMsg();
+          if (typeof disposerContacts === "function") disposerContacts();
+          // @ts-ignore
+          if (gd) {
+            // @ts-ignore
+            gd.tabRedDotDisposerMessage = null;
+            // @ts-ignore
+            gd.tabRedDotDisposerContacts = null;
+          }
+        } catch {}
+        // 清空全局 store 引用，防止旧账号数据残留
+        try {
+          // @ts-ignore
+          (app as any).globalData.store = null;
+        } catch {}
+        wx.removeStorageSync('accessToken');
+        wx.removeStorageSync('imAccid');
+        wx.removeStorageSync('imToken');
+        wx.removeStorageSync('token');
+        wx.removeStorageSync('userInfo');
+        const finish = () => {
+          // 注销完成后，重新创建 nim 和 store，并更新至全局
+          try {
+            // @ts-ignore
+            if (typeof (app as any).resetIMCore === 'function') {
+              // @ts-ignore
+              (app as any).resetIMCore();
+            }
+          } catch {}
+          this.triggerEvent('logout', {});
+        };
+        if (nim && nim.V2NIMLoginService && nim.V2NIMLoginService.logout) {
+          nim.V2NIMLoginService.logout().then(() => {
+            finish();
+          }).catch(() => {
+            finish();
+          });
+        } else {
+          finish();
+        }
         
       } catch (error) {
         console.error('退出登录失败:', error);

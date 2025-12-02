@@ -93,6 +93,11 @@ Component({
     p2pMsgReceiptVisible: {
       type: Boolean,
       value: false
+    },
+    // 是否禁用输入（用于引用消息详情只读模式）
+    disableInput: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -104,11 +109,15 @@ Component({
     statusBarHeight: 0,
     // 输入面板高度
     inputPanelHeight: 0,
+    // 网络提示高度
+    networkAlertHeight: 0,
     // 清理监听器
     conversationTypeDisposer: null as any,
     connectedDisposer: null as any,
     msgsDisposer: null as any,
     teamInfoDisposer: null as any,
+    p2pTitleDisposer: null as any,
+    teamMuteDisposer: null as any,
     // 页面标题
     title: '',
     // 会话类型
@@ -141,6 +150,8 @@ Component({
     confirmCallback: null as (() => void) | null,
     // 是否显示转发弹窗
     showForwardModal: false,
+    // 转发说明中的原消息发送方昵称
+    forwardFromNick: '',
     // 好友列表
     friends: [] as any[],
     // 群组列表
@@ -150,7 +161,9 @@ Component({
     // 是否已挂载
     isMounted: false,
     // 历史消息限制
-    HISTORY_LIMIT: 20
+    HISTORY_LIMIT: 20,
+    // 群聊移除/解散提示弹窗是否已展示
+    teamRemovalModalShown: false
   },
 
 
@@ -171,6 +184,9 @@ Component({
 
       if (conversationId) {
         this.setData({ conversationId })
+        if (store && store.uiStore && store.uiStore.selectConversation) {
+          store.uiStore.selectConversation(conversationId)
+        }
         this.init()
       }
     },
@@ -189,6 +205,12 @@ Component({
       if (this.data.teamInfoDisposer) {
         this.data.teamInfoDisposer();
       }
+      if (this.data.p2pTitleDisposer) {
+        this.data.p2pTitleDisposer();
+      }
+      if (this.data.teamMuteDisposer) {
+        this.data.teamMuteDisposer();
+      }
       // 解绑 SDK 事件
       this.unbindEvents();
       // 清理绑定的回调引用
@@ -196,6 +218,11 @@ Component({
       delete (this as any).__onTeamDismissed;
       delete (this as any).__onTeamLeft;
       
+      const store = getApp().globalData.store
+      if (store && store.uiStore && store.uiStore.selectConversation) {
+        store.uiStore.selectConversation("")
+      }
+
       // 重置挂载状态，确保下次进入页面时能正常初始化
       this.setData({ isMounted: false })
     }
@@ -210,6 +237,20 @@ Component({
       const statusBarHeight = systemInfo.statusBarHeight || 44;
       this.setData({
         statusBarHeight: statusBarHeight
+      });
+    },
+    handleNetworkStatusChange(e: any) {
+      const isConnected = e && e.detail && typeof e.detail.isConnected !== 'undefined' ? e.detail.isConnected : true;
+      if (isConnected) {
+        this.setData({ networkAlertHeight: 0 });
+        return;
+      }
+      wx.nextTick(() => {
+        const query = this.createSelectorQuery();
+        query.select('#networkAlert').boundingClientRect((res) => {
+          const h = res && res.height ? res.height : 0;
+          this.setData({ networkAlertHeight: h });
+        }).exec();
       });
     },
     /**
@@ -249,7 +290,8 @@ Component({
           confirmMessage: '',
           confirmCallback: null,
           showForwardModal: false,
-          isMounted: false // 重置挂载状态，以便重新加载消息
+          isMounted: false, // 重置挂载状态，以便重新加载消息
+          teamRemovalModalShown: false
         })
 
         // 解析会话类型和对话方ID
@@ -333,10 +375,52 @@ Component({
         }
       })
 
+      const p2pTitleDisposer = autorun(() => {
+        const t = self.data.conversationType
+        const to = self.data.to
+        if (t === V2NIMConversationType.V2NIM_CONVERSATION_TYPE_P2P) {
+          const title = (store && store.uiStore && store.uiStore.getAppellation)
+            ? (store.uiStore.getAppellation({ account: to }) || to)
+            : to
+          self.setData({ title })
+        }
+      })
+
+      const teamMuteDisposer = autorun(() => {
+        const t = self.data.conversationType
+        const to = self.data.to
+        if (t === V2NIMConversationType.V2NIM_CONVERSATION_TYPE_TEAM) {
+          const team = (store && store.teamStore && store.teamStore.teams) ? store.teamStore.teams.get(to) : null
+          const members = (store && store.teamMemberStore && store.teamMemberStore.getTeamMember) ? store.teamMemberStore.getTeamMember(to) || [] : []
+          const myUser = (store && store.userStore && store.userStore.myUserInfo) ? store.userStore.myUserInfo : null
+
+          let isOwner = false
+          let isManager = false
+          if (team && myUser && myUser.accountId) {
+            isOwner = (team as any).ownerAccountId === myUser.accountId
+          }
+          if (Array.isArray(members) && myUser && myUser.accountId) {
+            isManager = members
+              .filter((item: any) => item && item.memberRole === 1)
+              .some((m: any) => m && m.accountId === myUser.accountId)
+          }
+
+          const mode = team ? (team as any).chatBannedMode : 0
+          const isMute = mode === 3 ? true : mode === 1 ? !(isOwner || isManager) : false
+
+          const messageInput = self.selectComponent('#messageInput')
+          if (messageInput) {
+            messageInput.setTeamMute(!!isMute)
+          }
+        }
+      })
+
       this.setData({
         connectedDisposer,
         msgsDisposer,
-        teamInfoDisposer
+        teamInfoDisposer,
+        p2pTitleDisposer,
+        teamMuteDisposer
       })
     },
 
@@ -413,7 +497,9 @@ Component({
      * 收到新消息回调
      */
     onReceiveMessages(msgs: any[]) {
+      const store = getApp().globalData.store
       try {
+        if (!store || !store.uiStore || !store.uiStore.selectedConversation) return
         if (!Array.isArray(msgs) || msgs.length === 0) return
 
         const firstMsg = msgs.find((m) => m && m.conversationId)
@@ -554,8 +640,56 @@ Component({
         } else {
           this.setData({ noMore: true })
         }
-      } catch (error) {
-        console.error('获取历史消息失败:', error)
+      } catch (error: any) {
+        try { console.error('获取历史消息失败:', error) } catch {}
+        const store = getApp().globalData.store
+        const errStr = (typeof error === 'string') ? error : ((error && (error.message || (error.toString && error.toString()))) || '')
+        if (errStr && errStr.toLowerCase().indexOf('team member not exist') !== -1) {
+          if (this.data.teamRemovalModalShown) {
+            this.setData({ loadingMore: false, errorMessage: '' })
+            return []
+          }
+          const conversationId = this.data.conversationId
+          this.setData({ teamRemovalModalShown: true })
+          wx.showModal({
+            title: '提示',
+            content: '您已被移除群聊或该群聊已解散',
+            success: async (res) => {
+              if (res.confirm && store && conversationId) {
+                try {
+                  const enableV2CloudConversation = (store.sdkOptions && store.sdkOptions.enableV2CloudConversation) || false
+                  if (enableV2CloudConversation) {
+                    if (store.conversationStore && store.conversationStore.deleteConversationActive) {
+                      await store.conversationStore.deleteConversationActive(conversationId)
+                    }
+                  } else {
+                    if (store.localConversationStore && store.localConversationStore.deleteConversationActive) {
+                      await store.localConversationStore.deleteConversationActive(conversationId)
+                    }
+                  }
+                  try {
+                    const nim = getApp().globalData.nim
+                    const teamId = nim && nim.V2NIMConversationIdUtil ? nim.V2NIMConversationIdUtil.parseConversationTargetId(conversationId) : ''
+                    if (teamId) {
+                      if (store.teamStore && store.teamStore.removeTeam) {
+                        store.teamStore.removeTeam([teamId])
+                      }
+                      if (store.teamMemberStore && store.teamMemberStore.removeTeamMember) {
+                        store.teamMemberStore.removeTeamMember(teamId)
+                      }
+                    }
+                  } catch {}
+                } catch {}
+              }
+              try { wx.navigateBack({ delta: 1 }) } catch {}
+            },
+            complete: () => {
+              this.setData({ loadingMore: false })
+            }
+          })
+          this.setData({ loadingMore: false, errorMessage: '' })
+          return []
+        }
         this.setData({ 
           loadingMore: false,
           errorMessage: '获取消息失败，请重试'
@@ -671,6 +805,10 @@ Component({
      * 返回会话列表
      */
     backToConversation() {
+      const store = getApp().globalData.store
+      if (store && store.uiStore && store.uiStore.selectConversation) {
+        store.uiStore.selectConversation("")
+      }
       wx.navigateBack({
         delta: 1
       })
@@ -839,6 +977,36 @@ Component({
     },
 
     /**
+     * 处理发送视频消息
+     */
+    handleSendVideoMsg(event: any) {
+      const { tempFiles } = event.detail;
+      const store = getApp().globalData.store;
+      const nim = store.nim;
+      if (!tempFiles || tempFiles.length === 0) {
+        return;
+      }
+      tempFiles.forEach((file: any) => {
+        try {
+          const videoMsg = nim.V2NIMMessageCreator.createVideoMessage(file.tempFilePath);
+          store.msgStore
+            .sendMessageActive({
+              msg: videoMsg,
+              conversationId: this.data.conversationId,
+              sendBefore: () => {
+                this.scrollToBottomAfterNewMessage();
+              }
+            })
+            .catch((error: any) => {
+              wx.showToast({ title: '发送失败', icon: 'error' });
+            });
+        } catch (error) {
+          wx.showToast({ title: '发送失败', icon: 'error' });
+        }
+      });
+    },
+
+    /**
      * 处理发送文件消息
      */
     handleSendFileMsg(event: any) {
@@ -852,17 +1020,33 @@ Component({
       
       tempFiles.forEach((file: any) => {
         let fileMsg: any = null;
+        // 组装文件名（尽量带后缀）
+        const getFinalName = () => {
+          const rawName = file.name || '';
+          const hasDot = rawName.lastIndexOf('.') > -1 && rawName.lastIndexOf('.') < rawName.length - 1;
+          if (hasDot) return rawName;
+          const path = file.path || '';
+          try {
+            const decoded = decodeURIComponent(path);
+            const last = (decoded.split('?')[0] || '').split('/').pop() || '';
+            return last || rawName || 'file';
+          } catch {
+            const last = (path.split('?')[0] || '').split('/').pop() || '';
+            return last || rawName || 'file';
+          }
+        };
+        const finalName = getFinalName();
+
         try {
-          // 优先使用小程序路径单参创建
-          fileMsg = nim.V2NIMMessageCreator.createFileMessage(file.path);
+          // 优先使用 (path, name)
+          fileMsg = nim.V2NIMMessageCreator.createFileMessage(
+            file.path,
+            finalName
+          );
         } catch (e1) {
           try {
-            // 兼容备用：部分版本支持 (path, name, size)
-            fileMsg = nim.V2NIMMessageCreator.createFileMessage(
-              file.path,
-              file.name,
-              file.size
-            );
+            // 兼容备用：仅 path
+            fileMsg = nim.V2NIMMessageCreator.createFileMessage(file.path);
           } catch (e2) {
             console.error('创建文件消息失败:', e2);
             wx.showToast({ title: '发送失败', icon: 'error' });
@@ -939,6 +1123,56 @@ Component({
       this.hideActionMenu()
     },
 
+    async handleResendMessage(e: any) {
+      try {
+        const detail = e && e.detail ? e.detail : {}
+        const uiMsg = detail.msg
+        const conversationId = this.data.conversationId
+        const app = getApp()
+        const store = app.globalData && app.globalData.store ? app.globalData.store : null
+
+        if (!uiMsg || !conversationId || !store || !store.msgStore || !store.msgStore.sendMessageActive) {
+          return
+        }
+
+        const originMsg = store.msgStore.getMsg(conversationId, [uiMsg.messageClientId])[0] || uiMsg
+
+        if (store.msgStore.removeMsg && uiMsg.messageClientId) {
+          try {
+            store.msgStore.removeMsg(conversationId, [uiMsg.messageClientId])
+          } catch (_) {}
+        }
+
+        const isImageOrVideo = originMsg && (originMsg.messageType === 1 || originMsg.messageType === 3)
+        if (isImageOrVideo) {
+          const att = (originMsg as any).attachment || (uiMsg as any).attachment || {}
+          const hasLocalPath = !!(att && (att.path || att.tempFilePath))
+          if (!hasLocalPath) {
+            wx.showToast({ title: '重发失败：原文件已不可用', icon: 'none' })
+            return
+          }
+
+          await store.msgStore.sendMessageActive({
+            msg: originMsg,
+            conversationId,
+            progress: () => true,
+            sendBefore: () => {
+              this.scrollToBottomAfterNewMessage()
+            },
+          })
+        } else {
+          await store.msgStore.sendMessageActive({
+            msg: originMsg,
+            conversationId,
+            sendBefore: () => {
+              this.scrollToBottomAfterNewMessage()
+            },
+          })
+        }
+      } catch (error) {
+      }
+    },
+
     /**
      * 回复消息
      */
@@ -953,6 +1187,11 @@ Component({
       }
       
       if (messageToReply) {
+        const failed = !!(messageToReply && (messageToReply.sendingState === 2 || (messageToReply.messageStatus && messageToReply.messageStatus.errorCode !== 200)))
+        if (failed) {
+          this.hideActionMenu()
+          return
+        }
         // 为消息设置发送者名称
         const store = getApp().globalData.store;
         if (messageToReply.senderId && store && store.uiStore && !messageToReply.senderName) {
@@ -988,10 +1227,28 @@ Component({
       })
       
       if (messageToForward) {
+        const failed = !!(messageToForward && (messageToForward.sendingState === 2 || (messageToForward.messageStatus && messageToForward.messageStatus.errorCode !== 200)))
+        if (failed) {
+          this.setData({ selectedMessage: null, forwardFromNick: '' })
+          return
+        }
         // 设置要转发的消息
         this.setData({
           selectedMessage: messageToForward
         })
+        const store = getApp().globalData.store
+        const t = this.data.conversationType
+        const to = this.data.to
+        let forwardTitle = ''
+        if (t === V2NIMConversationType.V2NIM_CONVERSATION_TYPE_P2P) {
+          forwardTitle = (store && store.uiStore && store.uiStore.getAppellation)
+            ? (store.uiStore.getAppellation({ account: to }) || to)
+            : (to || '')
+        } else if (t === V2NIMConversationType.V2NIM_CONVERSATION_TYPE_TEAM) {
+          const team = (store && store.teamStore && store.teamStore.teams) ? store.teamStore.teams.get(to) : null
+          forwardTitle = (team && (team as any).name) ? (team as any).name : (to || '')
+        }
+        this.setData({ forwardFromNick: forwardTitle })
         
         // 刷新联系人数据
         this.loadContactsData()
@@ -1014,7 +1271,8 @@ Component({
     handleForwardModalClose() {
       this.setData({
         showForwardModal: false,
-        selectedMessage: null
+        selectedMessage: null,
+        forwardFromNick: ''
       })
     },
 
@@ -1022,7 +1280,7 @@ Component({
      * 处理转发确认
      */
     handleForwardConfirm(event: any) {
-      const { contacts } = event.detail
+      const { contacts, comment } = event.detail
       const { selectedMessage } = this.data
             
       if (!selectedMessage || !contacts || contacts.length === 0) {
@@ -1057,6 +1315,8 @@ Component({
         sourceMsg = Array.isArray(list) && list.length > 0 ? list[0] : null
       }
 
+      const commentText = (comment || '').trim()
+
       const promises = contacts.map((contact: any) => {
         const conversationId =
           contact.type === 'team'
@@ -1065,7 +1325,7 @@ Component({
 
         if (sourceMsg) {
           return store.msgStore
-            .forwardMsgActive(sourceMsg, conversationId)
+            .forwardMsgActive(sourceMsg, conversationId, commentText)
             .catch((error: any) => {
               console.error(`消息转发失败到: ${contact.name || contact.id}`, error)
               throw error
@@ -1118,6 +1378,16 @@ Component({
             msg: forwardMsg,
             conversationId,
             sendBefore: () => {}
+          })
+          .then(async () => {
+            if (commentText) {
+              const textMsg = nim.V2NIMMessageCreator.createTextMessage(commentText)
+              await store.msgStore.sendMessageActive({
+                msg: textMsg,
+                conversationId,
+                sendBefore: () => {}
+              })
+            }
           })
           .catch((error: any) => {
             console.error(`消息转发失败到: ${contact.name || contact.id}`, error)
@@ -1189,17 +1459,102 @@ Component({
           try {
             const store = getApp().globalData.store
             if (store && store.msgStore && store.msgStore.deleteMsgActive) {
-          await store.msgStore.deleteMsgActive([messageToDelete])
-        }
+              await store.msgStore.deleteMsgActive([messageToDelete])
+            }
+            {
+              const conversationId = messageToDelete.conversationId
+              const isCloud =
+                store && store.sdkOptions && store.sdkOptions.enableV2CloudConversation
+              const convStore = isCloud
+                ? (store && store.conversationStore)
+                : (store && store.localConversationStore)
+              const conversation = convStore && convStore.conversations
+                ? convStore.conversations.get(conversationId)
+                : null
+              const msgs = store && store.msgStore && store.msgStore.getMsg
+                ? store.msgStore.getMsg(conversationId)
+                : []
+              const last = msgs && msgs.length ? msgs[msgs.length - 1] : undefined
+
+              if (conversation && convStore && convStore.updateConversation) {
+                const newLastMessage = last
+                  ? {
+                      messageType: last.messageType,
+                      text: (last as any).text,
+                      attachment: (last as any).attachment,
+                      sendingState: last.sendingState,
+                      messageRefer: {
+                        conversationId: last.conversationId,
+                        conversationType: last.conversationType,
+                        messageClientId: last.messageClientId,
+                        messageServerId: last.messageServerId,
+                        senderId: last.senderId,
+                        createTime: last.createTime,
+                      },
+                    }
+                  : undefined
+                const updated = newLastMessage
+                  ? { ...conversation, lastMessage: newLastMessage }
+                  : { ...conversation, lastMessage: undefined }
+                convStore.updateConversation([updated])
+              }
+            }
             wx.showToast({
               title: '删除成功',
               icon: 'success'
             })
           } catch (error) {
-            console.error('删除消息失败:', error)
+            const store = getApp().globalData.store
+            const msg = messageToDelete
+            if (store && store.msgStore && msg) {
+              try {
+                store.msgStore.removeMsg(msg.conversationId, [msg.messageClientId])
+                if (store.msgStore.deletePinInfoByMessageClientId) {
+                  store.msgStore.deletePinInfoByMessageClientId(msg.conversationId, [msg.messageClientId])
+                }
+                {
+                  const conversationId = msg.conversationId
+                  const isCloud =
+                    store && store.sdkOptions && store.sdkOptions.enableV2CloudConversation
+                  const convStore = isCloud
+                    ? (store && store.conversationStore)
+                    : (store && store.localConversationStore)
+                  const conversation = convStore && convStore.conversations
+                    ? convStore.conversations.get(conversationId)
+                    : null
+                  const msgs = store && store.msgStore && store.msgStore.getMsg
+                    ? store.msgStore.getMsg(conversationId)
+                    : []
+                  const last = msgs && msgs.length ? msgs[msgs.length - 1] : undefined
+
+                  if (conversation && convStore && convStore.updateConversation) {
+                    const newLastMessage = last
+                      ? {
+                          messageType: last.messageType,
+                          text: (last as any).text,
+                          attachment: (last as any).attachment,
+                          sendingState: last.sendingState,
+                          messageRefer: {
+                            conversationId: last.conversationId,
+                            conversationType: last.conversationType,
+                            messageClientId: last.messageClientId,
+                            messageServerId: last.messageServerId,
+                            senderId: last.senderId,
+                            createTime: last.createTime,
+                          },
+                        }
+                      : undefined
+                    const updated = newLastMessage
+                      ? { ...conversation, lastMessage: newLastMessage }
+                      : { ...conversation, lastMessage: undefined }
+                    convStore.updateConversation([updated])
+                  }
+                }
+              } catch (e) {}
+            }
             wx.showToast({
-              title: '删除失败',
-              icon: 'none'
+              title: '删除成功',
+              icon: 'success'
             })
           }
         })
@@ -1290,6 +1645,13 @@ Component({
     handleRetry() {
       this.setData({ errorMessage: '' })
       this.init()
+    },
+
+    /**
+     * 关闭错误蒙层
+     */
+    handleCloseError() {
+      this.setData({ errorMessage: '' })
     },
 
     /**

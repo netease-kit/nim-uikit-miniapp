@@ -5,7 +5,7 @@
   <view wx:elif="{{messageType === 'notification'}}" class="content-desc">
     {{notiMsgText}}
   </view>
-  <view wx:elif="{{sendingState === 3}}" class="content-desc">
+  <view wx:elif="{{sendingState === 2}}" class="content-desc">
     {{sendFailText}}
   </view>
   <view wx:elif="{{messageType === 'text'}}" class="content-desc">

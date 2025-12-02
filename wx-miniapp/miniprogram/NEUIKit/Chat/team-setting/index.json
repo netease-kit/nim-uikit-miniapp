@@ -5,6 +5,7 @@
     "icon": "../../basic-components/icon/icon",
     "message-avatar": "../message/message-avatar/index",
     "avatar": "../../basic-components/avatar/avatar",
-    "appellation": "../../basic-components/appellation/appellation"
+    "appellation": "../../basic-components/appellation/appellation",
+    "form-input": "../../basic-components/form-input/form-input"
   }
 }

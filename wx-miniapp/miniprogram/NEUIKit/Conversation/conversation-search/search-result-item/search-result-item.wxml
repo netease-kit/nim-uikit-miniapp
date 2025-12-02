@@ -1,4 +1,4 @@
-<view class="search-result-list-item" bindtap="handleItemClick">
+<view class="search-result-list-item" catchtap="handleItemClick">
   <view class="result-item-avatar">
     <avatar account="{{to}}" avatar="{{item.avatar}}"></avatar>
   </view>

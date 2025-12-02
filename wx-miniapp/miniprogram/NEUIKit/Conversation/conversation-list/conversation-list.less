@@ -109,38 +109,7 @@
         background-color: #f5f6fa;
       }
 
-      .dropdown-container {
-        position: absolute;
-        top: 100%;
-        right: 0;
-        z-index: 1000;
-        background-color: #fff;
-        border-radius: 16rpx;
-        box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-        min-width: 200rpx;
-
-        .add-menu-list {
-          .add-menu-item {
-            display: flex;
-            align-items: center;
-            padding: 24rpx 32rpx;
-            font-size: 28rpx;
-            color: #333;
-            white-space: nowrap;
-            cursor: pointer;
-            transition: background-color 0.2s;
-
-            &:active {
-              background-color: #f5f6fa;
-            }
-
-            &:not(:last-child) {
-              border-bottom: 1rpx solid #f5f6fa;
-            }
-          }
-        }
-      }
+      /* 下拉容器移到全局，保留按钮样式即可 */
     }
   }
 
@@ -163,5 +132,46 @@
   .conversation-list-wrapper {
     flex: 1;
     height: calc(100vh - 200rpx); // 减去导航栏的高度
+  }
+
+  .loading-text,
+  .msg-tip {
+    width: 100%;
+    text-align: center;
+    font-size: 24rpx;
+    color: #A6ADB6;
+    padding: 16rpx 0;
+  }
+
+  /* 全局下拉容器（脱离 scroll-view） */
+  .dropdown-container-global {
+    position: fixed;
+    z-index: 1000;
+    background-color: #fff;
+    border-radius: 16rpx;
+    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    min-width: 200rpx;
+
+    .add-menu-list {
+      .add-menu-item {
+        display: flex;
+        align-items: center;
+        padding: 24rpx 32rpx;
+        font-size: 28rpx;
+        color: #333;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: background-color 0.2s;
+
+        &:active {
+          background-color: #f5f6fa;
+        }
+
+        &:not(:last-child) {
+          border-bottom: 1rpx solid #f5f6fa;
+        }
+      }
+    }
   }
 }

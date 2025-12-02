@@ -89,7 +89,6 @@
   border-radius: 20rpx;
   margin-right: 24rpx;
   overflow: hidden;
-  background-color: #f0f0f0;
   flex-shrink: 0;
 }
 
@@ -155,6 +154,10 @@
   font-weight: 500;
   color: #333333;
   margin-bottom: 8rpx;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .team-info-subtitle {
@@ -220,7 +223,7 @@
 .member-avatars {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   margin-top: 20rpx;
   gap: 16rpx;
   
@@ -230,14 +233,11 @@
      align-items: center;
      max-width: 80rpx;
      
-     .member-avatar {
-       width: 80rpx;
-       height: 80rpx;
-       border-radius: 50%;
-       border: 2rpx solid #ffffff;
-       box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-       margin-bottom: 8rpx;
-     }
+    .member-avatar {
+      margin-bottom: 8rpx;
+      border: none;
+      box-shadow: none;
+    }
      
      appellation {
        font-size: 20rpx;
@@ -433,6 +433,10 @@
   text-align: center;
   padding: 0 40rpx 40rpx;
   line-height: 1.5;
+}
+
+.edit-nickname-input{
+  text-align: left;
 }
 
 .modal-actions {

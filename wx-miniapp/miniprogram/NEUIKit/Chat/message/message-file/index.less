@@ -4,9 +4,10 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 12px 15px;
+  padding: 6px;
   border-radius: 8px;
   border: 1px solid #dee0e2;
+  box-sizing: border-box;
 }
 
 /* 接收的文件消息 */
@@ -22,7 +23,7 @@
 /* 文件内容区域 */
 .msg-file-content {
   margin-left: 15px;
-  max-width: 300px;
+  max-width: 240px;
   min-width: 0;
 }
 
@@ -39,7 +40,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 150px;
+  max-width: 130px;
 }
 
 /* 文件名后缀 */
@@ -51,5 +52,51 @@
 .msg-file-size {
   color: #999;
   font-size: 10px;
+  margin-top: 0;
+  margin-left: auto;
+}
+
+.msg-file-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin-top: 4px;
+}
+
+.audio-player {
+  margin-top: 0;
+}
+
+.audio-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.audio-btn {
+  background: #007aff;
+  color: #fff;
+  font-size: 10px;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.audio-time {
+  color: #666;
+  font-size: 10px;
+}
+
+.audio-progress {
+  width: 100%;
+  height: 4px;
+  background: #e6e8eb;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.audio-progress-fill {
+  height: 100%;
+  background: #34c759;
+  width: 0;
 }

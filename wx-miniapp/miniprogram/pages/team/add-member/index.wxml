@@ -21,10 +21,8 @@
           <view class="friend-name">{{item.nick || item.account}}</view>
         </view>
       </view>
-      <view class="friend-action">
-        <checkbox-group bindchange="handleSelectFriend" data-account="{{item.account}}">
-          <checkbox value="{{item.account}}" checked="{{item.isInTeam || item.selected}}" disabled="{{item.isInTeam || item.isBlacklisted}}" />
-        </checkbox-group>
+      <view class="friend-action" data-account="{{item.account}}" bindtap="handleSelectFriend">
+        <checkbox value="{{item.account}}" checked="{{item.selected}}" disabled="{{item.isInTeam}}" />
       </view>
     </view>
   </view>
@@ -45,7 +43,7 @@
       class="confirm-button {{selectedMembers.length > 0 ? 'active' : 'disabled'}}" 
       bindtap="handleConfirm"
     >
-      {{confirmText}}{{(selectedMembers.length + (includeSelf ? 1 : 0)) > 0 ? '(' + (selectedMembers.length + (includeSelf ? 1 : 0)) + ')' : ''}}
+      {{confirmText}}{{selectedMembers.length > 0 ? '(' + selectedMembers.length + ')' : ''}}
     </view>
   </view>
 </view>

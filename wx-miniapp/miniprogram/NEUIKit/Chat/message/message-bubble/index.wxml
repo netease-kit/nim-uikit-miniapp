@@ -60,13 +60,13 @@
     </view>
     
     <!-- 回复 -->
-    <view wx:if="{{msg.messageType !== 'call'}}" class="msg-action-btn" bindtap="handleReply">
+    <view wx:if="{{msg.messageType !== 'call' && !(msg.sendingState === 2 || (msg.messageStatus && msg.messageStatus.errorCode!==200))}}" class="msg-action-btn" bindtap="handleReply">
       <icon size="18" color="#656A72" class="msg-action-btn-icon" type="icon-huifu" />
       <text class="msg-action-btn-text">回复</text>
     </view>
     
     <!-- 转发 -->
-    <view wx:if="{{msg.messageType !== 'audio' && msg.messageType !== 'call'}}" class="msg-action-btn" bindtap="handleForward">
+    <view wx:if="{{msg.messageType !== 'audio' && msg.messageType !== 'call' && !(msg.sendingState === 2 || (msg.messageStatus && msg.messageStatus.errorCode!==200))}}" class="msg-action-btn" bindtap="handleForward">
       <icon size="18" color="#656A72" class="msg-action-btn-icon" type="icon-zhuanfa" />
       <text class="msg-action-btn-text">转发</text>
     </view>

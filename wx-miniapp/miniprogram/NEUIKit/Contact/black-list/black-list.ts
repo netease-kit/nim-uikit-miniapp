@@ -91,42 +91,53 @@ Component({
     },
 
     async handleRemoveFromBlacklist(event: any) {
-      const { account } = event.currentTarget.dataset;
-      if (!account) return;
-      
+      const account = event && event.currentTarget && event.currentTarget.dataset
+        ? event.currentTarget.dataset.account
+        : ''
+      if (!account) return
+
       try {
-        const store = (this as any).storeInstance;
+        const store = (this as any).storeInstance
         if (!store) {
-          console.error('store实例不存在');
-          return;
+          console.error('store实例不存在')
+          return
         }
 
-        // 显示确认对话框
         const result = await new Promise((resolve) => {
           wx.showModal({
             title: '确认操作',
             content: '确定要将此用户移出黑名单吗？',
-            success: (res) => resolve(res.confirm),
-            fail: () => resolve(false)
-          });
-        });
-        
-        if (!result) return;
-        
-        // 调用移出黑名单API
-        await store && store.relationStore && store.relationStore.removeUserFromBlockListActive(account);
-        
-        wx.showToast({
-          title: '已移出黑名单',
-          icon: 'success'
-        });
-        
+            success: (res) => resolve((res && res.confirm) ? true : false),
+            fail: () => resolve(false),
+          })
+        })
+
+        if (!result) return
+
+        await store.relationStore.removeUserFromBlockListActive(account)
+
+        // 再次确认是否已移除，避免断网误提示
+        const stillIn = store.relationStore && store.relationStore.isInBlacklist
+          ? store.relationStore.isInBlacklist(account)
+          : true
+
+        if (stillIn) {
+          wx.showToast({
+            title: '解除黑名单失败',
+            icon: 'none',
+          })
+        } else {
+          wx.showToast({
+            title: '已移出黑名单',
+            icon: 'success',
+          })
+        }
       } catch (error) {
-        console.error('移出黑名单失败:', error);
+        console.error('解除黑名单失败:', error)
         wx.showToast({
-          title: '操作失败',
-          icon: 'error'
-        });
+          title: '解除黑名单失败',
+          icon: 'none',
+        })
       }
     }
   }

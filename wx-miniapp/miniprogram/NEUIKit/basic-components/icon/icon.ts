@@ -91,6 +91,7 @@ const urlMap: Record<string, string> = {
   "icon-lishixiaoxi": "https://yx-web-nosdn.netease.im/common/77888d982110f3c709a3ff4fd24d48dd/icon-lishixiaoxi.png",
   "icon-More": "https://yx-web-nosdn.netease.im/common/137ad07f3245dc220d5546433db63786/icon-More.png",
   "icon-PPT": "https://yx-web-nosdn.netease.im/common/1991f8d57d1d432fcd930e4049403958/icon-PPT.png",
+  "icon-PDF": "https://yx-web-nosdn.netease.im/common/eff77df69b4cd770dcca6d63784916ec/Pdf.png",
   "icon-qita": "https://yx-web-nosdn.netease.im/common/c6f687c792ef029bef1e59ccce986922/icon-qita.png",
   "icon-quxiaoxiaoximiandarao": "https://yx-web-nosdn.netease.im/common/f6f54973789b69939c57ae94a38e8d25/icon-quxiaoxiaoximiandarao.png",
   "icon-quxiaozhiding": "https://yx-web-nosdn.netease.im/common/ad2d451e8f1ee36ec9cec6787d6074c0/icon-quxiaozhiding.png",

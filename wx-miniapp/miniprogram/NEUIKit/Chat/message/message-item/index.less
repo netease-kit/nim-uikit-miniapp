@@ -1,6 +1,6 @@
 /* 消息项容器 */
 .msg-item-wrapper {
-  padding: 8px 16px;
+  padding: 8px 0;
   position: relative;
 }
 
@@ -41,6 +41,10 @@
 
 /* 自己发送消息的内容区域右对齐 */
 .msg-common.msg-self .msg-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+
   text-align: right;
 }
 
@@ -105,6 +109,8 @@
   padding: 8px;
   background-color: rgba(0, 0, 0, 0.05);
   border-radius: 4px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .reply-line {
@@ -116,17 +122,25 @@
 
 .reply-content {
   flex: 1;
+  min-width: 0; /* 关键：允许在flex容器中收缩以启用省略号 */
+  overflow: hidden;
+  text-align: left;
 }
 
 .reply-sender {
+  max-width: 100%;
   font-size: 12px;
   color: #337eff;
   margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .reply-text {
   font-size: 12px;
   color: #666;
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -144,6 +158,17 @@
   min-width: 150px;
   object-fit: contain;
   border-radius: 8px;
+}
+
+.msg-image-fail {
+  height: 200px;
+  max-width: 200px;
+  min-width: 150px;
+  border-radius: 8px;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .loading-spinner {
@@ -165,9 +190,10 @@
 
 /* 消息已读状态 */
 .msg-read-status {
-  display: flex;
+  display: inline-flex;
   align-items: flex-end;
-  margin-left: 8px;
+  margin-left: 4px;
+  margin-top: 2px;
 }
 
 .read-text {
@@ -224,4 +250,96 @@
 .call-duration {
   font-size: 12px;
   color: #666;
+}
+
+.reply-text-modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.reply-text-modal {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.reply-text-modal__close-floating {
+  position: absolute;
+  top: 120px;
+  right: 20px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.reply-text-modal__close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+}
+
+.reply-text-modal__body {
+  flex: 1;
+  padding: 16px;
+  background-color: #fff;
+  box-sizing: border-box;
+  position: relative;
+  text-align: center;
+  overflow-y: auto;
+}
+
+.reply-text-modal__content {
+  width: 100%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.reply-text-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid #e5e6eb;
+  background-color: #fff;
+}
+
+.reply-text-modal__copy-btn {
+  padding: 8px 16px;
+  background-color: #337eff;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.reply-text-modal__close-btn {
+  padding: 8px 16px;
+  background-color: #f0f0f0;
+  color: #333;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-left: 12px;
 }

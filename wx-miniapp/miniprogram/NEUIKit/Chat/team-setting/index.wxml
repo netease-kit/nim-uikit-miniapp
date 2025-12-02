@@ -26,7 +26,6 @@
           </view>
           <view class="team-info-content">
             <view class="team-info-title">{{team.name || '群聊'}}</view>
-            <view class="team-info-subtitle">点击查看群信息</view>
           </view>
         </view>
         <view class="setting-arrow">
@@ -48,6 +47,11 @@
         <view class="member-list">
           <!-- 成员头像列表 -->
           <view class="member-avatars">
+            <!-- 添加成员按钮 -->
+            <view class="member-add" wx:if="{{canAddMember}}" bindtap="handleAddTeamMember">
+              <view class="add-icon">+</view>
+            </view>
+
             <view class="member-item" wx:for="{{teamMembers}}" wx:key="index">
               <avatar 
                 class="member-avatar" 
@@ -56,10 +60,6 @@
                 size="40"
                 fontSize="10"
               />
-            </view>
-            <!-- 添加成员按钮 -->
-            <view class="member-add" wx:if="{{canAddMember}}" bindtap="handleAddTeamMember">
-              <view class="add-icon">+</view>
             </view>
           </view>
         </view>
@@ -136,6 +136,28 @@
         <view class="modal-button confirm-button" bindtap="handleModalConfirm">
           确定
         </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 编辑群昵称弹窗（普通弹窗样式） -->
+  <view class="modal-overlay" wx:if="{{editNicknameVisible}}" bindtap="closeEditNickname">
+    <view class="modal-content" catchtap="stopPropagation">
+      <view class="modal-title">修改群昵称</view>
+      <view class="modal-message">
+        <form-input 
+          className="edit-nickname-input"
+          type="text"
+          placeholder="请输入群昵称"
+          modelValue="{{editNicknameValue}}"
+          allowClear="{{true}}"
+          maxlength="{{15}}"
+          bind:update="onEditNicknameInputUpdate"
+        ></form-input>
+      </view>
+      <view class="modal-actions">
+        <view class="modal-button cancel-button" bindtap="closeEditNickname">取消</view>
+        <view class="modal-button confirm-button" bindtap="confirmEditNickname">确定</view>
       </view>
     </view>
   </view>

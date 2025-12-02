@@ -24,10 +24,12 @@
 .sign {
   color: #333333;
   font-size: 14px;
-  max-width: 450px;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
+  max-width: 200px;
+  min-width: 0;
   text-align: right;
   margin-right: 20rpx;
 }
@@ -77,10 +79,13 @@
   font-size: 32rpx;
   color: #666;
   margin-right: 20rpx;
-  max-width: 400rpx;
+  flex: 1;
+  min-width: 0;
+  max-width: 240px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: right;
 }
 
 /* 账号显示 */
@@ -107,6 +112,11 @@
 /* 箭头图标 */
 .arrow {
   margin-left: 20rpx;
+}
+
+/* 签名标题固定宽度为两列（避免被挤压） */
+.sign-item .item-left {
+  flex: 0 0 160rpx;
 }
 
 /* picker组件样式 */

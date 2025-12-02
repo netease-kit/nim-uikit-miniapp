@@ -65,9 +65,13 @@ Component({
 
 
     handleValidMsgClick() {
+      const store = (this as any).storeInstance;
+      if (store && store.sysMsgStore && store.sysMsgStore.setAllApplyMsgRead) {
+        store.sysMsgStore.setAllApplyMsgRead();
+      }
       wx.navigateTo({
-      url: '/pages/contacts/valid-list/index'
-    });
+        url: '/pages/contacts/valid-list/index'
+      });
     },
 
     handleBlacklistClick() {

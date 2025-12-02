@@ -47,6 +47,12 @@ Component({
       if (this.data.audioContext) {
         this.data.audioContext.destroy()
       }
+      try {
+        const app = getApp() as any
+        if (app && app.globalData && app.globalData.__currentAudioComponent === this) {
+          app.globalData.__currentAudioComponent = null
+        }
+      } catch {}
     }
   },
 
@@ -67,22 +73,31 @@ Component({
       audioContext.onPause(() => {
         this.setData({ 
           animationFlag: false, 
-          isAudioPlaying: false 
+          isAudioPlaying: false,
+          audioIconType: 'icon-yuyin3'
         })
       })
 
       audioContext.onEnded(() => {
         this.setData({ 
           animationFlag: false, 
-          isAudioPlaying: false 
+          isAudioPlaying: false,
+          audioIconType: 'icon-yuyin3'
         })
+        try {
+          const app = getApp() as any
+          if (app && app.globalData && app.globalData.__currentAudioComponent === this) {
+            app.globalData.__currentAudioComponent = null
+          }
+        } catch {}
       })
 
       audioContext.onError((error: any) => {
         console.warn('音频播放出错:', error)
         this.setData({ 
           animationFlag: false, 
-          isAudioPlaying: false 
+          isAudioPlaying: false,
+          audioIconType: 'icon-yuyin3'
         })
       })
     },
@@ -95,10 +110,19 @@ Component({
         audioContext.pause()
         audioContext.seek(0)
       } else {
-        // 通知其他音频停止播放
-        this.triggerEvent('audioPlayChange', { 
-          messageId: this.properties.msg.messageClientId 
-        })
+        // 全局互斥：停止其它正在播放的语音
+        try {
+          const app = getApp() as any
+          if (app && app.globalData && app.globalData.__currentAudioComponent && app.globalData.__currentAudioComponent !== this) {
+            const prevComp = app.globalData.__currentAudioComponent
+            if (prevComp && typeof prevComp.stopAudio === 'function') {
+              prevComp.stopAudio()
+            }
+          }
+          if (app && app.globalData) {
+            app.globalData.__currentAudioComponent = this
+          }
+        } catch {}
         
         audioContext.src = (this.properties.msg.attachment && this.properties.msg.attachment.url) ? this.properties.msg.attachment.url : ''
         audioContext.play()
@@ -138,8 +162,15 @@ Component({
         this.data.audioContext.seek(0)
         this.setData({ 
           isAudioPlaying: false, 
-          animationFlag: false 
+          animationFlag: false,
+          audioIconType: 'icon-yuyin3'
         })
+        try {
+          const app = getApp() as any
+          if (app && app.globalData && app.globalData.__currentAudioComponent === this) {
+            app.globalData.__currentAudioComponent = null
+          }
+        } catch {}
       }
     }
   }

@@ -39,7 +39,7 @@
     </view>
     
     <button
-      wx:if="{{relation !== 'stranger'}}"
+      wx:if="{{relation === 'friend'}}"
       class="go-chat-button"
       size="mini"
       bindtap="gotoChat"

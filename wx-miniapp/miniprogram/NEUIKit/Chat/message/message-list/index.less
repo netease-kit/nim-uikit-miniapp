@@ -2,7 +2,7 @@
 .msg-list-wrapper {
   flex: 1;
   /* 消息列表容器高度计算：100vh减去状态栏、导航栏、输入框和网络状态提示的高度，以及动态面板高度 */
-  height: calc(100vh - var(--status-bar-height, 44px) - 48px - 68px - var(--input-panel-height, 0px));
+  height: calc(100vh - var(--status-bar-height, 44px) - 48px - 68px - var(--input-panel-height, 0px) - var(--network-alert-height, 0));
   background-color: #f5f6fa;
   position: relative;
   overflow: hidden;
@@ -136,4 +136,11 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* 安全区域适配：额外减去底部安全区高度 */
+@supports (bottom: env(safe-area-inset-bottom)) {
+  .msg-list-wrapper {
+    height: calc(100vh - var(--status-bar-height, 44px) - 48px - 68px - var(--input-panel-height, 0px) - env(safe-area-inset-bottom) - var(--network-alert-height, 0px));
+  }
 }

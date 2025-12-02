@@ -89,14 +89,32 @@
       line-height: 1.5;
     }
 
+    .error-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .error-close,
     .error-retry {
       padding: 12px 24px;
-      background-color: #007AFF;
-      color: #ffffff;
       border-radius: 8px;
       font-size: 16px;
       font-weight: 500;
       transition: background-color 0.2s;
+    }
+
+    .error-close {
+      background-color: #6c757d;
+      color: #ffffff;
+
+      &:active {
+        background-color: #5a6268;
+      }
+    }
+
+    .error-retry {
+      background-color: #007AFF;
+      color: #ffffff;
 
       &:active {
         background-color: #0056b3;

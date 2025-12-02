@@ -92,12 +92,14 @@ Component({
      * 解析群组ID
      */
     parseTeamId(conversationId: string): string {
-      // 这里需要根据实际的SDK实现来解析
-      // 假设conversationId格式为 "team|teamId"
-      if (conversationId.startsWith('team|')) {
-        return conversationId.split('|')[1];
-      }
-      return '';
+      try {
+        const app = getApp() as any
+        const nim = app && app.globalData ? app.globalData.nim : null
+        if (nim && nim.V2NIMConversationIdUtil) {
+          return nim.V2NIMConversationIdUtil.parseConversationTargetId(conversationId) || ''
+        }
+      } catch {}
+      return ''
     },
 
     /**

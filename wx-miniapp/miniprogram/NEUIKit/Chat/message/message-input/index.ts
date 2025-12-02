@@ -1,3 +1,6 @@
+import { EMOJI_ICON_MAP_CONFIG } from '../../../utils/emoji'
+import { autorun } from '../../../../libs/store'
+
 Component({
   properties: {
     conversationType: {
@@ -23,7 +26,10 @@ Component({
     replyMsgTypeText: '',
     isTeamMute: false,
     isFocus: false,
-    inputPanelHeight: 0
+    inputPanelHeight: 0,
+    keyboardHeight: 0,
+    fileChoosing: false,
+    replyAppellationDisposer: null as any
   },
 
   lifetimes: {
@@ -31,10 +37,51 @@ Component({
       // 监听回复消息事件
       this.onReplyMessage = this.onReplyMessage.bind(this);
       // 这里可以添加事件监听器
+      const onKeyboardHeightChange = (res: any) => {
+        const h = res && res.height ? res.height : 0;
+        this.setData({ keyboardHeight: h });
+        if (h > 0) {
+          this.setData({
+            emojiVisible: false,
+            sendMoreVisible: false,
+            inputPanelHeight: 0
+          });
+          this.updateParentPanelHeight();
+        }
+      };
+      (this as any)._onKeyboardHeightChange = onKeyboardHeightChange;
+      wx.onKeyboardHeightChange(onKeyboardHeightChange);
+
+      const app = getApp() as any
+      const store = app && app.globalData ? app.globalData.store : null
+      const disposer = autorun(() => {
+        const data = (this as any).data || {}
+        const replyMsg = data.replyMsg
+        const ct = data.conversationType
+        const to = data.to
+        const teamId = (ct === '2' || ct === 2) ? (to || '') : ''
+        const id = replyMsg && replyMsg.senderId ? replyMsg.senderId : ''
+        let name = id
+        if (store && store.uiStore && id) {
+          name = store.uiStore.getAppellation({ account: id, teamId }) || id
+        }
+        if (replyMsg && name && name !== replyMsg.senderName) {
+          this.setData({ 'replyMsg.senderName': name })
+        }
+      })
+      this.setData({ replyAppellationDisposer: disposer })
     },
     
     detached() {
       // 清理事件监听器
+      if ((this as any)._onKeyboardHeightChange) {
+        wx.offKeyboardHeightChange && wx.offKeyboardHeightChange((this as any)._onKeyboardHeightChange);
+        (this as any)._onKeyboardHeightChange = null;
+      }
+      if (this.data.replyAppellationDisposer) {
+        this.data.replyAppellationDisposer()
+        this.setData({ replyAppellationDisposer: null })
+      }
     }
   },
 
@@ -43,7 +90,7 @@ Component({
     handleInput(e: any) {
       const v = e.detail.value || '';
       this.setData({
-        inputText: v.length > 140 ? v.slice(0, 140) : v
+        inputText: v
       });
     },
 
@@ -72,8 +119,13 @@ Component({
       this.setData({
         emojiVisible: newEmojiVisible,
         sendMoreVisible: false,
-        inputPanelHeight: newEmojiVisible ? 240 : 0
+        inputPanelHeight: newEmojiVisible ? 240 : 0,
+        isFocus: !newEmojiVisible,
+        keyboardHeight: newEmojiVisible ? 0 : this.data.keyboardHeight
       });
+      if (newEmojiVisible) {
+        wx.hideKeyboard();
+      }
       this.updateParentPanelHeight();
     },
 
@@ -84,8 +136,13 @@ Component({
       this.setData({
         sendMoreVisible: newSendMoreVisible,
         emojiVisible: false,
-        inputPanelHeight: newSendMoreVisible ? 120 : 0
+        inputPanelHeight: newSendMoreVisible ? 120 : 0,
+        isFocus: false,
+        keyboardHeight: newSendMoreVisible ? 0 : this.data.keyboardHeight
       });
+      if (newSendMoreVisible) {
+        wx.hideKeyboard();
+      }
       this.updateParentPanelHeight();
     },
 
@@ -105,22 +162,29 @@ Component({
       const { emoji } = e.detail;
       const { inputText } = this.data;
       if (!emoji) return;
-      if ((inputText || '').length >= 140) {
-        wx.showToast({ title: '最多140字', icon: 'none' });
-        return;
-      }
       const next = (inputText || '') + emoji;
-      const limited = next.length > 140 ? next.slice(0, 140) : next;
-      if (limited.length !== next.length) {
-        wx.showToast({ title: '最多140字', icon: 'none' });
-      }
-      this.setData({ inputText: limited });
+      this.setData({ inputText: next });
     },
 
     // 处理表情删除
     handleEmojiDelete() {
       const { inputText } = this.data;
-      if (inputText.length > 0) {
+      if (!inputText) return;
+      const keys = Object.keys(EMOJI_ICON_MAP_CONFIG || {});
+      let matched = '';
+      for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        if (inputText.endsWith(k)) {
+          if (!matched || k.length > matched.length) {
+            matched = k;
+          }
+        }
+      }
+      if (matched) {
+        this.setData({
+          inputText: inputText.slice(0, inputText.length - matched.length)
+        });
+      } else {
         this.setData({
           inputText: inputText.slice(0, -1)
         });
@@ -146,40 +210,47 @@ Component({
         inputText: '',
         isReplyMsg: false,
         replyMsg: null,
-        emojiVisible: false
+        emojiVisible: false,
+        inputPanelHeight: 0,
+        isFocus: false
       });
+      this.updateParentPanelHeight();
     },
 
-    // 发送图片消息
     handleSendImageMsg() {
       wx.chooseMedia({
         count: 9,
-        mediaType: ['image'],
+        mediaType: ['image', 'video'],
         sourceType: ['album', 'camera'],
         success: (res) => {
-          const tempFiles = res.tempFiles;
-          
-          // 触发发送图片事件
-          this.triggerEvent('sendImageMsg', {
-            tempFiles
-          });
-          
-          this.setData({
-            sendMoreVisible: false,
-            emojiVisible: false,
-            isFocus: true,
-            inputPanelHeight: 0
-          });
-          this.updateParentPanelHeight();
-        },
+          const tempFiles = res.tempFiles || [];
+          const imageFiles = tempFiles.filter((f: any) => f.fileType === 'image');
+          const videoFiles = tempFiles.filter((f: any) => f.fileType === 'video');
+          if (imageFiles.length) {
+            this.triggerEvent('sendImageMsg', { tempFiles: imageFiles });
+          }
+          if (videoFiles.length) {
+            this.triggerEvent('sendVideoMsg', { tempFiles: videoFiles });
+          }
+        this.setData({
+          sendMoreVisible: false,
+          emojiVisible: false,
+          isFocus: false,
+          inputPanelHeight: 0
+        });
+        try { wx.hideKeyboard() } catch {}
+        this.updateParentPanelHeight();
+      },
         fail: (err) => {
-          console.error('选择图片失败:', err);
+          console.error('选择媒体失败:', err);
         }
       });
     },
 
     // 发送文件消息
-    handleSendFileMsg() {
+  handleSendFileMsg() {
+      if (this.data.fileChoosing) return
+      this.setData({ fileChoosing: true })
       wx.chooseMessageFile({
         count: 1,
         type: 'file',
@@ -191,16 +262,20 @@ Component({
             tempFiles
           });
           
-          this.setData({
-            sendMoreVisible: false,
-            emojiVisible: false,
-            isFocus: true,
-            inputPanelHeight: 0
-          });
-          this.updateParentPanelHeight();
-        },
+        this.setData({
+          sendMoreVisible: false,
+          emojiVisible: false,
+          isFocus: false,
+          inputPanelHeight: 0
+        });
+        try { wx.hideKeyboard() } catch {}
+        this.updateParentPanelHeight();
+      },
         fail: (err) => {
           console.error('选择文件失败:', err);
+        },
+        complete: () => {
+          this.setData({ fileChoosing: false })
         }
       });
     },
@@ -257,11 +332,13 @@ Component({
         'notification': '通知'
       };
       
-      // 确保回复消息有正确的发送者名称
-      if (msg && msg.senderId && !msg.senderName) {
+      if (msg && msg.senderId) {
         const store = getApp().globalData.store;
         if (store && store.uiStore) {
-          msg.senderName = store.uiStore.getAppellation({ account: msg.senderId }) || msg.senderId;
+          const ct = (this.data as any).conversationType
+          const to = (this.data as any).to
+          const teamId = (ct === '2' || ct === 2) ? (to || '') : ''
+          msg.senderName = store.uiStore.getAppellation({ account: msg.senderId, teamId }) || msg.senderId;
         }
       }
       

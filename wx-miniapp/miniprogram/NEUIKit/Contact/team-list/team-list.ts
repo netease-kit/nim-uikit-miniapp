@@ -35,14 +35,8 @@ Component({
         // 监听群组列表变化
         const disposer = autorun(() => {
           const teamList = (store.uiStore && store.uiStore.teamList) ? store.uiStore.teamList : [];
-          // 按群组名称排序
-          const sortedTeamList = teamList.sort((a: any, b: any) => {
-            const nameA = (a.name || a.teamId || '').toLowerCase();
-            const nameB = (b.name || b.teamId || '').toLowerCase();
-            return nameA.localeCompare(nameB);
-          });
-          
-          this.setData({ teamList: sortedTeamList });
+          // 直接使用 UiStore 的排序（按创建时间倒序）
+          this.setData({ teamList });
         });
         
         this.setData({ disposer });

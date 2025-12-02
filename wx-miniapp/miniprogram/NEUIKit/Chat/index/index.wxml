@@ -1,4 +1,4 @@
-<view class="msg-page-wrapper-h5 {{theme === 'dark' ? 'dark-theme' : ''}}" style="--status-bar-height: {{statusBarHeight}}px; --input-panel-height: {{inputPanelHeight}}px;">
+<view class="msg-page-wrapper-h5" style="--status-bar-height: {{statusBarHeight}}px; --input-panel-height: {{inputPanelHeight}}px; --network-alert-height: {{networkAlertHeight}}px;">
   <!-- 状态栏占位 -->
   <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
   <!-- 导航栏 -->
@@ -7,8 +7,8 @@
 
 
   <!-- 网络状态提示 -->
-  <view class="msg-alert">
-    <network-alert theme="{{theme}}" />
+  <view class="msg-alert" id="networkAlert">
+    <network-alert theme="{{theme}}" bind:statusChange="handleNetworkStatusChange" />
   </view>
 
   <!-- 消息列表 -->
@@ -27,10 +27,12 @@
     bind:deleteMsg="handleDeleteMessage"
     bind:replyMsg="handleReplyMessage"
     bind:forwardMsg="handleForwardMessage"
+    bind:resendMsg="handleResendMessage"
   />
 
   <!-- 消息输入框 -->
   <message-input
+    wx:if="{{!disableInput}}"
     id="messageInput"
     reply-msgs-map="{{replyMsgsMap}}"
     conversation-type="{{conversationType || ''}}"
@@ -38,6 +40,7 @@
     theme="{{theme}}"
     bind:sendTextMsg="handleSendTextMsg"
     bind:sendImageMsg="handleSendImageMsg"
+    bind:sendVideoMsg="handleSendVideoMsg"
     bind:sendFileMsg="handleSendFileMsg"
     bind:inputFocus="handleInputFocus"
     bind:inputPanelHeightChange="handleInputPanelHeightChange"
@@ -56,8 +59,9 @@
       <icon type="warning" size="48" color="#ff3b30" />
     </view>
     <view class="error-text">{{errorMessage}}</view>
-    <view class="error-retry" bindtap="handleRetry">
-      重试
+    <view class="error-actions">
+      <view class="error-close" bindtap="handleCloseError">关闭</view>
+      <view class="error-retry" bindtap="handleRetry">重试</view>
     </view>
   </view>
 
@@ -68,11 +72,11 @@
         <icon type="copy" size="20" />
         <text>复制</text>
       </view>
-      <view class="action-item" bindtap="handleReplyMessage">
+      <view class="action-item" bindtap="handleReplyMessage" wx:if="{{!(selectedMessage.sendingState === 2 || (selectedMessage.messageStatus && selectedMessage.messageStatus.errorCode!==200))}}">
         <icon type="reply" size="20" />
         <text>回复</text>
       </view>
-      <view class="action-item" bindtap="handleForwardMessage">
+      <view class="action-item" bindtap="handleForwardMessage" wx:if="{{!(selectedMessage.sendingState === 2 || (selectedMessage.messageStatus && selectedMessage.messageStatus.errorCode!==200))}}">
         <icon type="forward" size="20" />
         <text>转发</text>
       </view>
@@ -106,10 +110,12 @@
   <!-- 转发弹窗 -->
   <message-forward-modal
     visible="{{showForwardModal}}"
+    forwardFromNick="{{forwardFromNick}}"
     friends="{{friends}}"
     teams="{{teams}}"
     recentContacts="{{recentContacts}}"
     theme="{{theme}}"
+    multiSelect="{{false}}"
     bind:close="handleForwardModalClose"
     bind:confirm="handleForwardConfirm"
   />

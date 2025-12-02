@@ -1,4 +1,4 @@
-<view class="reply-message" wx:if="{{replyMsg}}">
+<view class="reply-message" wx:if="{{replyMsg}}" bindtap="handleReplyClick">
   <!-- 回复线条 -->
   <view class="reply-line"></view>
   
@@ -8,9 +8,9 @@
     <view class="reply-sender">{{senderName}}</view>
     
     <!-- 回复的消息内容 -->
-    <view class="reply-text" wx:if="{{replyMsg.messageType === 'text'}}">
-      {{replyMsg.text || ''}}
-    </view>
+    <block wx:if="{{replyMsg.messageType === 'text'}}">
+      <message-text msg="{{replyMsg}}" fontSize="12" singleLine="{{true}}" />
+    </block>
     
     <!-- 图片消息 -->
     <view class="reply-media" wx:elif="{{replyMsg.messageType === 'image'}}">

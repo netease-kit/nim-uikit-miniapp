@@ -8,7 +8,7 @@ Component({
 
   data: {
     showReadStatus: false,
-    readStatusText: ''
+    p2pMsgRotateDeg: 0
   },
 
   observers: {
@@ -21,26 +21,35 @@ Component({
     updateReadStatus(conversation: any) {
       if (!conversation || !conversation.lastMessage) {
         this.setData({
-          showReadStatus: false
+          showReadStatus: false,
+          p2pMsgRotateDeg: 0
         })
         return
       }
 
-      const { lastMessage } = conversation
-      
-      // 只有群聊且是自己发送的消息才显示已读状态
-      if (conversation.type === 'TEAM' && lastMessage.isSelf) {
-        const readCount = lastMessage.readCount || 0
-        const totalCount = conversation.memberCount || 0
-        
+      try {
+        const app = getApp() as any
+        const nim = app && app.globalData ? app.globalData.nim : null
+        const store = app && app.globalData ? app.globalData.store : null
+
+        const p2pMsgReceiptVisible = !!(store && store.localOptions && store.localOptions.p2pMsgReceiptVisible)
+        const convType = nim && nim.V2NIMConversationIdUtil ? nim.V2NIMConversationIdUtil.parseConversationType(conversation.conversationId) : null
+
+        if (!p2pMsgReceiptVisible || convType !== 1) {
+          this.setData({ showReadStatus: false, p2pMsgRotateDeg: 0 })
+          return
+        }
+
+        const lastMsgTime = (conversation.lastMessage && conversation.lastMessage.messageRefer && conversation.lastMessage.messageRefer.createTime) ? conversation.lastMessage.messageRefer.createTime : 0
+        const receiptTime = typeof conversation.msgReceiptTime === 'number' ? conversation.msgReceiptTime : 0
+        const deg = receiptTime >= lastMsgTime ? 360 : 0
+
         this.setData({
           showReadStatus: true,
-          readStatusText: `${readCount}/${totalCount}已读`
+          p2pMsgRotateDeg: deg
         })
-      } else {
-        this.setData({
-          showReadStatus: false
-        })
+      } catch (e) {
+        this.setData({ showReadStatus: false, p2pMsgRotateDeg: 0 })
       }
     }
   }

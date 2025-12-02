@@ -3,6 +3,7 @@
   "styleIsolation": "apply-shared",
   "usingComponents": {
     "icon": "../../../basic-components/icon/icon",
-    "face": "../face/index"
+    "face": "../face/index",
+    "message-text": "../message-text/index"
   }
 }

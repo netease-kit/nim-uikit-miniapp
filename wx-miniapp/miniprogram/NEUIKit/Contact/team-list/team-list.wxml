@@ -32,9 +32,6 @@
           <view class="teamlist-name">
             {{item.name || item.teamId}}
           </view>
-          <view class="teamlist-desc">
-            {{item.memberCount}}人 · {{item.intro || '暂无群介绍'}}
-          </view>
         </view>
         
         <view class="teamlist-actions">

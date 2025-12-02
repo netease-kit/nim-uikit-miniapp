@@ -7,6 +7,27 @@ interface User {
   avatar?: string;
 }
 
+const TEAM_DEFAULT_AVATARS = [
+  'https://yx-web-nosdn.netease.im/common/2425b4cc058e5788867d63c322feb7ac/groupAvatar1.png',
+  'https://yx-web-nosdn.netease.im/common/62c45692c9771ab388d43fea1c9d2758/groupAvatar2.png',
+  'https://yx-web-nosdn.netease.im/common/d1ed3c21d3f87a41568d17197760e663/groupAvatar3.png',
+  'https://yx-web-nosdn.netease.im/common/e677d8551deb96723af2b40b821c766a/groupAvatar4.png',
+  'https://yx-web-nosdn.netease.im/common/fd6c75bb6abca9c810d1292e66d5d87e/groupAvatar5.png'
+];
+
+function pickDefaultTeamAvatar(seed: string): string {
+  const arr = TEAM_DEFAULT_AVATARS;
+  if (!seed) return arr[0];
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  const idx = Math.abs(hash) % arr.length;
+  return arr[idx];
+}
+
 
 
 Page({
@@ -18,7 +39,8 @@ Page({
     p2pConversationId: '',
     preSelectedAccount: '',
     preSelectedUser: null as User | null,
-    statusBarHeight: 0 // 状态栏高度
+    statusBarHeight: 0, // 状态栏高度
+    creating: false
   },
 
   onLoad(options: any) {    
@@ -73,11 +95,20 @@ Page({
       
       if (store && store.uiStore && store.uiStore.friends) {
         // 从store获取好友列表
-        friends = store.uiStore.friends.map((friend: any) => ({
-          accountId: friend.accountId,
-          nick: friend.nick || friend.name,
-          avatar: friend.avatar
-        }));
+        friends = store.uiStore.friends
+          .map((friend: any) => ({
+            accountId: friend.accountId,
+            nick: friend.nick || friend.name,
+            avatar: friend.avatar
+          }))
+          // 过滤黑名单好友
+          .filter((f: any) => {
+            try {
+              return !(store.relationStore && store.relationStore.isInBlacklist && store.relationStore.isInBlacklist(f.accountId));
+            } catch (_) {
+              return true;
+            }
+          });
       } else {
         // 如果store中没有数据，尝试从NIM获取
         const nim = app.globalData.nim;
@@ -88,6 +119,10 @@ Page({
             nick: friend.alias || friend.nick,
             avatar: friend.avatar
           }));
+          // 若可用，则基于store过滤黑名单
+          if (store && store.relationStore && store.relationStore.isInBlacklist) {
+            friends = friends.filter((f: any) => !store.relationStore.isInBlacklist(f.accountId));
+          }
         }
       }
       
@@ -122,6 +157,14 @@ Page({
       try {
         const app = getApp<IAppOption>();
         const store = app.globalData.store;
+        // 黑名单校验：若预选账号在黑名单，直接阻止选择
+        try {
+          const isBlocked = !!(store && store.relationStore && store.relationStore.isInBlacklist && store.relationStore.isInBlacklist(preSelectedAccount));
+          if (isBlocked) {
+            wx.showToast({ title: '该好友在黑名单，无法创建群聊', icon: 'none' });
+            return;
+          }
+        } catch (_) {}
         let preSelectedUser: User | null = null;
         
         // 从store中查找预选用户信息
@@ -219,10 +262,15 @@ Page({
     if (!this.data.canCreate) {
       return;
     }
+    if (this.data.creating) {
+      wx.showToast({ title: '正在创建，请稍候', icon: 'none' })
+      return
+    }
 
     const { teamName, selectedMembers, preSelectedAccount } = this.data;
 
     try {
+      this.setData({ creating: true })
       wx.showLoading({
         title: '创建中...'
       });
@@ -244,10 +292,12 @@ Page({
       }
       
       // 使用 store.teamStore.createTeamActive 创建群聊
+      const seed = (teamName && teamName.trim()) || (memberAccountIds[0] || '');
+      const avatarUrl = pickDefaultTeamAvatar(seed);
       const team = await store.teamStore.createTeamActive({
         accounts: memberAccountIds,
         name: teamName.trim(),
-        avatar: '', // 可以设置默认头像
+        avatar: avatarUrl,
       });
 
       wx.hideLoading();
@@ -264,9 +314,14 @@ Page({
         
         setTimeout(() => {
           wx.redirectTo({
-            url: `/pages/chat/index/index?conversationId=${conversationId}`
+            url: `/pages/chat/index/index?conversationId=${conversationId}`,
+            fail: () => {
+              this.setData({ creating: false })
+            }
           });
-        }, 1500);
+        }, 0);
+      } else {
+        this.setData({ creating: false })
       }
 
     } catch (error) {
@@ -277,6 +332,7 @@ Page({
         title: '创建失败',
         icon: 'error'
       });
+      this.setData({ creating: false })
     }
   }
 });

@@ -7,14 +7,12 @@
 .nav-bar-wrapper {
   // position: fixed;
   display: flex;
+  height: 49px;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
+  padding: 8px 10px;
   z-index: 9999;
   color: #000;
-  top: 0;
-  left: 0;
-  right: 0;
   box-sizing: border-box;
   background-size: cover;
   background-position: center;
@@ -35,8 +33,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   transition: background-color 0.2s;
 }
@@ -115,43 +113,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
-}
-
-/* 安全区域适配 */
-.nav-bar-wrapper {
-  padding-top: calc(10px + env(safe-area-inset-top));
-  height: calc(48px + env(safe-area-inset-top));
-}
-
-/* 深色模式支持 */
-@media (prefers-color-scheme: dark) {
-  .nav-bar-wrapper {
-    background-color: #1a1a1a !important;
-    color: #fff;
-  }
-  
-  .subTitle {
-    color: #999;
-  }
-  
-  .nav-bar-back:active {
-    background-color: rgba(255, 255, 255, 0.1);
-  }
-}
-
-/* 状态栏高度适配 */
-.nav-bar-wrapper.with-status-bar {
-  padding-top: calc(10px + var(--status-bar-height, 0px));
-  height: calc(48px + var(--status-bar-height, 0px));
-}
-
-.nav-bar-container.with-status-bar .block {
-  height: calc(48px + var(--status-bar-height, 0px));
-}
-
-/* 透明模式 */
-.nav-bar-wrapper.transparent {
-  background-color: transparent !important;
 }
 
 /* 阴影效果 */

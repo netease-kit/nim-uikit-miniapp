@@ -1,4 +1,4 @@
-<view class="input-root" style="--input-panel-height: {{inputPanelHeight}}px;">
+<view class="input-root" style="bottom: {{keyboardHeight}}px; --input-panel-height: {{inputPanelHeight}}px;">
   <!-- 回复消息显示区域 -->
   <view wx:if="{{isReplyMsg}}" class="reply-message-wrapper">
     <view class="reply-message-close" bindtap="removeReplyMsg">
@@ -6,10 +6,20 @@
     </view>
     <view class="reply-line">｜</view>
     <view class="reply-title">回复</view>
+    <message-avatar 
+      class="reply-avatar"
+      account="{{replyMsg.senderId}}"
+      teamId="{{(conversationType === '2' || conversationType === 2) ? to : ''}}"
+      size="24"
+    />
     <view class="reply-to">{{replyMsg.senderName || replyMsg.senderId}}:</view>
     <view class="reply-message">
-      <text wx:if="{{replyMsg.messageType === 'text'}}">{{replyMsg.text}}</text>
-      <text wx:else>[{{replyMsgTypeText}}]</text>
+      <block wx:if="{{replyMsg.messageType === 'text'}}">
+        <message-text msg="{{replyMsg}}" fontSize="12" singleLine />
+      </block>
+      <block wx:else>
+        <text>[{{replyMsgTypeText}}]</text>
+      </block>
     </view>
   </view>
   
@@ -24,14 +34,14 @@
     <view class="input-inner">
       <input 
         class="msg-input-input"
-        placeholder="{{isTeamMute ? '您已被禁言' : '请输入消息'}}"
+        placeholder="{{isTeamMute ? '当前群聊禁言中' : '请输入消息'}}"
         value="{{inputText}}"
         disabled="{{isTeamMute}}"
         focus="{{isFocus}}"
-        maxlength="140"
+        maxlength="-1"
         confirm-type="send"
         cursor-spacing="20"
-        adjust-position="{{true}}"
+        adjust-position="{{false}}"
         bindinput="handleInput"
         bindconfirm="handleSendTextMsg"
         bindfocus="handleInputFocus"
