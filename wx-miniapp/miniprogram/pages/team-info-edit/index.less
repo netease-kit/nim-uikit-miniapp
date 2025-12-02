@@ -111,7 +111,6 @@
   border-radius: 16rpx;
   margin-right: 16rpx;
   overflow: hidden;
-  background-color: #f0f0f0;
   flex-shrink: 0;
 }
 
@@ -184,7 +183,82 @@
   margin-top: 20rpx;
 }
 
-/* 深色主题适配 */
+/* 编辑弹窗样式 */
+.edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.edit-modal-content {
+  background-color: #ffffff;
+  border-radius: 16rpx;
+  margin: 0 40rpx;
+  max-width: 640rpx;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 32rpx;
+}
+
+.edit-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 24rpx;
+}
+
+.edit-textarea {
+  width: 100%;
+  min-height: 160rpx;
+  border: 1rpx solid #e5e5e5;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  color: #333333;
+  box-sizing: border-box;
+}
+
+.edit-count {
+  text-align: right;
+  font-size: 24rpx;
+  color: #999999;
+  margin-top: 12rpx;
+}
+
+.edit-actions {
+  display: flex;
+  margin-top: 24rpx;
+}
+
+.edit-button {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx;
+  font-size: 28rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.edit-button.cancel {
+  color: #666666;
+  border-right: 1rpx solid #f0f0f0;
+}
+
+.edit-button.confirm {
+  color: #007AFF;
+  font-weight: 500;
+}
+
+.edit-button.confirm.disabled {
+  color: #999999;
+}
+
 @media (prefers-color-scheme: dark) {
   .team-info-edit-container {
     background-color: #1a1a1a;
@@ -231,5 +305,34 @@
 
   .loading-text {
     color: #cccccc;
+  }
+
+  .edit-modal-content {
+    background-color: #2a2a2a;
+  }
+
+  .edit-title {
+    color: #ffffff;
+  }
+
+  .edit-textarea {
+    border-color: #3a3a3a;
+    color: #ffffff;
+    background-color: #1c1c1e;
+  }
+
+  .edit-count {
+    color: #8e8e93;
+  }
+
+  .edit-button.cancel {
+    color: #8e8e93;
+    border-right-color: #38383a;
+    border-top-color: #38383a;
+  }
+
+  .edit-button.confirm {
+    color: #0a84ff;
+    border-top-color: #38383a;
   }
 }

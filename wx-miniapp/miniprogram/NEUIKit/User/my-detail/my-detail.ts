@@ -220,27 +220,27 @@ Component({
 
     // 处理原生modal确认
     handleModalConfirm(field: string, inputValue: string) {
-      if (!inputValue.trim()) {
+      const trimmed = inputValue.trim();
+
+      // 昵称长度限制（允许为空，非空时<=15）
+      if (field === 'name' && trimmed && trimmed.length > 15) {
         wx.showToast({
-          title: '内容不能为空',
+          title: '昵称不能超过15个字符',
           icon: 'none'
         });
         return;
       }
-      
-      // 手机号格式验证
-      if (field === 'mobile') {
-        // 只允许数字
-        if (!/^\d+$/.test(inputValue.trim())) {
+
+      // 手机号格式验证（仅在非空时验证）
+      if (field === 'mobile' && trimmed) {
+        if (!/^\d+$/.test(trimmed)) {
           wx.showToast({
             title: '手机号只能输入数字',
             icon: 'none'
           });
           return;
         }
-        
-        // 验证手机号格式（11位数字，以1开头）
-        if (!/^1[3-9]\d{9}$/.test(inputValue.trim())) {
+        if (!/^1[3-9]\d{9}$/.test(trimmed)) {
           wx.showToast({
             title: '请输入正确的11位手机号',
             icon: 'none'
@@ -248,11 +248,10 @@ Component({
           return;
         }
       }
-      
-      // 邮箱格式验证
+
+      // 邮箱格式验证（已包含非空判断）
       if (field === 'email') {
-        // 验证邮箱格式
-        if (!/^[a-zA-Z0-9]+([-_.][a-zA-Z0-9]+)*@([a-zA-Z0-9]+[-.])+[a-zA-Z0-9]{2,5}$/.test(inputValue.trim()) && inputValue.trim() !== '') {
+        if (!/^[a-zA-Z0-9]+([-_.][a-zA-Z0-9]+)*@([a-zA-Z0-9]+[-.])+[a-zA-Z0-9]{2,5}$/.test(trimmed) && trimmed !== '') {
           wx.showToast({
             title: '请输入正确的邮箱格式',
             icon: 'none'
@@ -267,7 +266,7 @@ Component({
       const app = getApp<IAppOption>();
       const { store } = app.globalData;
       
-      let finalValue: any = inputValue.trim();
+      let finalValue: any = trimmed;
       
       // 性别字段需要特殊处理
       if (field === 'gender') {

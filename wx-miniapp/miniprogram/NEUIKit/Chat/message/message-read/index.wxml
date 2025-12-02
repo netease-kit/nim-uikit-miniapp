@@ -1,18 +1,16 @@
 <view class="message-read {{theme === 'dark' ? 'message-read--dark' : ''}}" wx:if="{{readInfo}}">
-  <!-- 简单模式：只显示已读状态 -->
+  <!-- 简单模式：icon-read(全读) 或 CSS扇形(部分/未读) -->
   <view class="message-read__simple" wx:if="{{mode === 'simple'}}">
     <view class="message-read__status">
-      <icon 
-        name="{{getReadStatusIcon()}}"
-        size="12" 
-        color="{{getReadStatusColor()}}"
-        class="message-read__status-icon"
-      />
-      <text class="message-read__status-text">{{getReadStatusText()}}</text>
+      <view wx:if="{{isAllRead}}" class="icon-read-wrapper">
+        <icon type="icon-read" size="16" />
+      </view>
+      <view wx:else class="sector">
+        <view class="cover-1" style="transform: rotate({{rotateDeg}}deg)"></view>
+        <view class="{{rotateDeg >= 180 ? 'cover-2 cover-3' : 'cover-2'}}"></view>
+      </view>
     </view>
-    <view class="message-read__time" wx:if="{{showTime && formatTime}}">
-      {{formatTime}}
-    </view>
+    <view class="message-read__time" wx:if="{{showTime && formatTime}}">{{formatTime}}</view>
   </view>
   
   <!-- 详细模式：显示已读用户列表 -->

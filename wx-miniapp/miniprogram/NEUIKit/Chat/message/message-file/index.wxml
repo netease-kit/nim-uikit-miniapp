@@ -9,7 +9,15 @@
         <view class="msg-file-title-prefix">{{prefixName}}</view>
         <view class="msg-file-title-suffix">{{suffixName}}</view>
       </view>
-      <view class="msg-file-size">{{fileSize}}</view>
+      <view class="msg-file-meta">
+        <view wx:if="{{isAudio}}" class="audio-player">
+          <view class="audio-controls">
+            <view class="audio-btn" catchtap="onToggleAudioPlay">{{audioPlaying ? '暂停' : '播放'}}</view>
+          </view>
+        </view>
+        
+        <view class="msg-file-size">{{fileSize}}</view>
+      </view>
     </view>
   </view>
 </view>

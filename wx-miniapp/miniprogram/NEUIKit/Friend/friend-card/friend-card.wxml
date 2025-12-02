@@ -7,6 +7,7 @@
   <user-card
     account="{{userInfo.accountId}}"
     nick="{{userInfo.name}}"
+    alias="{{alias}}"
   />
   
   <block wx:if="{{relation === 'stranger'}}">
@@ -15,6 +16,7 @@
         <view class="item-left">{{addBlacklistText}}</view>
         <switch
           checked="{{isInBlacklist}}"
+          color="#007aff"
           bindchange="handleSwitchChange"
         />
       </view>
@@ -29,7 +31,7 @@
     <view class="userInfo-item-wrapper">
       <view class="userInfo-item" bindtap="handleAliasClick">
         <view class="item-left">{{remarkText}}</view>
-        <view class="item-right">
+        <view class="item-right-wrap">
           <text class="item-right-alias">{{alias}}</text>
           <icon
               class="more-icon"
@@ -84,7 +86,7 @@
     <view class="userInfo-item-wrapper">
       <view class="userInfo-item">
         <view class="item-left">{{addBlacklistText}}</view>
-        <switch-component checked="{{isInBlacklist}}" bindchange="handleSwitchChange" />
+        <switch-component checked="{{isInBlacklist}}" color="#007aff" bindchange="handleSwitchChange" />
       </view>
     </view>
     

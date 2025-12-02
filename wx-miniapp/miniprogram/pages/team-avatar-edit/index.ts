@@ -119,14 +119,6 @@ Page({
       const canEdit = isOwner || isManager || team.updateInfoMode === 1
 
       this.setData({ hasPermission: canEdit })
-
-      if (!canEdit) {
-        wx.showToast({
-          title: '您无权限修改',
-          icon: 'error'
-        })
-      }
-
     } catch (error) {
       console.error('检查权限失败:', error)
     }

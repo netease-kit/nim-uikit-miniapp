@@ -13,8 +13,15 @@ Component({
     addDropdownVisible: false,
     currentMoveSessionId: '',
     conversationList: [] as any[],
+    listSignature: '',
     statusBarHeight: 0, // 状态栏高度
+    windowWidth: 0,
     buttonClass: 'button-box',
+    dropdownTop: 0,
+    dropdownRight: 0,
+    loadingMore: false,
+    noMore: false,
+    limit: 50,
     
     // 添加nim和store实例
     nim: null as any,
@@ -28,7 +35,9 @@ Component({
     createTeamText: t('createTeamText'),
     securityTipText: t('securityTipText'),
     searchText: t('searchText'),
-    conversationEmptyText: t('conversationEmptyText')
+    conversationEmptyText: t('conversationEmptyText'),
+    loadingText: t('loading'),
+    noMoreText: t('noMoreText')
   },
 
   lifetimes: {
@@ -50,12 +59,33 @@ Component({
         const _conversationList = enableV2CloudConversation
           ? (store && store.uiStore && store.uiStore.conversations) || []
           : (store && store.uiStore && store.uiStore.localConversations) || [];
-        const sortedList = _conversationList && _conversationList.sort ? _conversationList.sort(
-          ( a: { sortOrder: number; }, b: { sortOrder: number; }) => b.sortOrder - a.sortOrder
-        ) : [];
+
+        const base = Array.isArray(_conversationList)
+          ? _conversationList.slice()
+          : []
+
+        const sortedList = base.sort(
+          (a: { sortOrder: number }, b: { sortOrder: number }) => b.sortOrder - a.sortOrder
+        )
+
+        const newSignature = sortedList
+          .map((item: any) => [
+            item.conversationId,
+            item.sortOrder,
+            item.unreadCount,
+            item.stickTop,
+            (item.lastMessage && item.lastMessage.messageRefer && item.lastMessage.messageRefer.createTime) ? item.lastMessage.messageRefer.createTime : 0,
+            (typeof item.msgReceiptTime === 'number' ? item.msgReceiptTime : 0)
+          ].join(':'))
+          .join('|')
+
+        if (newSignature === this.data.listSignature) {
+          return
+        }
 
         this.setData({
-          conversationList: sortedList
+          conversationList: sortedList,
+          listSignature: newSignature
         })
       })
 
@@ -85,24 +115,40 @@ Component({
       try {
         const systemInfo = wx.getSystemInfoSync();
         const statusBarHeight = systemInfo.statusBarHeight || 44; // 默认44px
+        const windowWidth = systemInfo.windowWidth || 0;
         
         this.setData({
-          statusBarHeight: statusBarHeight
+          statusBarHeight: statusBarHeight,
+          windowWidth
         });
       } catch (error) {
         console.error('获取系统信息失败:', error);
         // 设置默认值
         this.setData({
-          statusBarHeight: 44
+          statusBarHeight: 44,
+          windowWidth: 0
         });
       }
     },
 
     showAddDropdown() {
-      this.setData({
-        addDropdownVisible: true,
-        buttonClass: 'button-box button-box-active'
-      })
+      const query = (this as any).createSelectorQuery ? (this as any).createSelectorQuery() : wx.createSelectorQuery();
+      query.in(this);
+      query.select('.button-icon-add').boundingClientRect((rect: any) => {
+        if (rect && rect.bottom != null) {
+          const dropdownTop = rect.bottom;
+          const windowWidth = this.data.windowWidth || (wx.getSystemInfoSync().windowWidth || 0);
+          const dropdownRight = windowWidth > 0 && rect.right != null ? (windowWidth - rect.right) : 32; // 兜底右侧间距
+          this.setData({
+            dropdownTop,
+            dropdownRight
+          });
+        }
+        this.setData({
+          addDropdownVisible: true,
+          buttonClass: 'button-box button-box-active'
+        });
+      }).exec();
     },
 
     hideAddDropdown() {
@@ -113,18 +159,40 @@ Component({
     },
 
     onAddFriend() {
-      this.hideAddDropdown();
-      // 跳转到添加好友页面
       wx.navigateTo({
-        url: '/pages/friend/add-friend/index'
+        url: '/pages/friend/add-friend/index',
+        success: () => {
+          this.hideAddDropdown();
+        },
+        fail: (err) => {
+          console.error('跳转到添加好友页面失败:', err);
+          wx.showToast({
+            title: '跳转失败',
+            icon: 'none'
+          });
+        },
+        complete: () => {
+          this.hideAddDropdown();
+        }
       });
     },
 
     onCreateGroup() {
-      this.hideAddDropdown();
-      // 跳转到创建群聊页面
       wx.navigateTo({
-        url: '/pages/team/create-team/index'
+        url: '/pages/team/create-team/index',
+        success: () => {
+          this.hideAddDropdown();
+        },
+        fail: (err) => {
+          console.error('跳转到创建群聊页面失败:', err);
+          wx.showToast({
+            title: '跳转失败',
+            icon: 'none'
+          });
+        },
+        complete: () => {
+          this.hideAddDropdown();
+        }
       });
     },
 
@@ -163,21 +231,21 @@ Component({
     handleSessionItemDeleteClick(e: any) {
       const { conversation } = e.detail;
       const { enableV2CloudConversation } = this.data;
-      const { nimInstance } = this as any;
+      const { storeInstance } = this as any;
       
       wx.showModal({
         title: '提示',
         content: '确定要删除该会话吗？',
         success: async (res) => {
-          if (res.confirm && nimInstance) {
+          if (res.confirm && storeInstance) {
             try {
               if (enableV2CloudConversation) {
-                if (nimInstance && nimInstance.conversationStore && nimInstance.conversationStore.deleteConversationActive) {
-                  await nimInstance.conversationStore.deleteConversationActive(conversation.conversationId);
+                if (storeInstance && storeInstance.conversationStore && storeInstance.conversationStore.deleteConversationActive) {
+                  await storeInstance.conversationStore.deleteConversationActive(conversation.conversationId);
                 }
               } else {
-                if (nimInstance && nimInstance.localConversationStore && nimInstance.localConversationStore.deleteConversationActive) {
-                  await nimInstance.localConversationStore.deleteConversationActive(conversation.conversationId);
+                if (storeInstance && storeInstance.localConversationStore && storeInstance.localConversationStore.deleteConversationActive) {
+                  await storeInstance.localConversationStore.deleteConversationActive(conversation.conversationId);
                 }
               }
               
@@ -238,6 +306,47 @@ Component({
         this.setData({
           currentMoveSessionId: ''
         })
+      }
+    },
+
+    handleScrollToLower() {
+      if ((this.data.conversationList || []).length === 0) return
+      this.handleLoadMore()
+    },
+
+    async handleLoadMore() {
+      const { enableV2CloudConversation, loadingMore, noMore, limit } = this.data
+      if (loadingMore || noMore) return
+      const app = getApp<IAppOption>()
+      const { store } = app.globalData
+      if (!store) return
+      const baseList = enableV2CloudConversation
+        ? (store && store.uiStore && store.uiStore.conversations) || []
+        : (store && store.uiStore && store.uiStore.localConversations) || []
+      const lastItem = Array.isArray(baseList) && baseList.length > 0 ? baseList[baseList.length - 1] : null
+      const offset = lastItem && typeof lastItem.sortOrder === 'number' ? lastItem.sortOrder : 0
+      this.setData({ loadingMore: true })
+      try {
+        if (enableV2CloudConversation) {
+          if (store.conversationStore && store.conversationStore.getConversationListActive) {
+            const res = await store.conversationStore.getConversationListActive(offset, limit)
+            const size = res && res.conversationList ? res.conversationList.length : 0
+            if (size < limit) {
+              this.setData({ noMore: true })
+            }
+          }
+        } else {
+          if (store.localConversationStore && store.localConversationStore.getConversationListActive) {
+            const res = await store.localConversationStore.getConversationListActive(offset, limit)
+            const size = res && res.conversationList ? res.conversationList.length : 0
+            if (size < limit) {
+              this.setData({ noMore: true })
+            }
+          }
+        }
+      } catch (e) {
+      } finally {
+        this.setData({ loadingMore: false })
       }
     },
 

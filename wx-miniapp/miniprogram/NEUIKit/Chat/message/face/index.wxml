@@ -19,7 +19,7 @@
     </scroll-view>
     <view class="control-buttons">
       <view class="delete-btn" bindtap="onDeleteClick">
-        <icon type="shanchu" size="20" />
+        <icon type="icon-tuigejian" size="24" />
       </view>
       <view class="send-btn" bindtap="onSendClick">
         发送

@@ -10,13 +10,13 @@
         <view class="dot" wx:if="{{isMute}}"></view>
         <view class="badge" wx:else>{{unread}}</view>
       </view>
-      <avatar account="{{to}}" avatar="{{teamAvatar}}"></avatar>
+      <avatar account="{{to}}" avatar="{{isP2P ? '' : teamAvatar}}"></avatar>
     </view>
     
     <view class="conversation-item-right">
       <view class="conversation-item-top">
         <appellation 
-          wx:if="{{conversation.type === 'P2P'}}"
+          wx:if="{{isP2P}}"
           class="conversation-item-title"
           account="{{to}}"
         ></appellation>

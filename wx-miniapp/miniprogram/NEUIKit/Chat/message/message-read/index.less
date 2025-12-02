@@ -25,6 +25,49 @@
     color: #999999;
     line-height: 14px;
   }
+
+  /* icon-read 图标容器（与 Vue 风格保持一致） */
+  .icon-read-wrapper {
+    margin: 0 6px 2px 0;
+  }
+
+  /* 扇形进度容器（与 Vue 风格保持一致） */
+  .sector {
+    display: inline-block;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #4c84ff;
+    width: 14px;
+    height: 14px;
+    background-color: #eee;
+    border-radius: 50%;
+    margin: 0 6px 0 0;
+  }
+
+  /* 扇形进度遮罩层1 */
+  .cover-1 {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    background-color: #4c84ff;
+    transform-origin: right;
+  }
+
+  /* 扇形进度遮罩层2 */
+  .cover-2 {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    background-color: #eee;
+  }
+
+  /* 扇形进度遮罩层3 */
+  .cover-3 {
+    right: 0;
+    background-color: #4c84ff;
+  }
   
   &__time {
     font-size: 10px;

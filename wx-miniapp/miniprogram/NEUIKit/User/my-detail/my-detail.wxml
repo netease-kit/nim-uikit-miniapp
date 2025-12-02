@@ -26,7 +26,7 @@
     </view>
 
     <!-- 昵称 -->
-    <view class="userInfo-item" bindtap="navigatorToUserItem" data-field="name">
+    <view class="userInfo-item name-item" bindtap="navigatorToUserItem" data-field="name">
       <view class="item-left">{{name}}</view>
       <view class="item-right">
         <view class="nick">
@@ -132,7 +132,7 @@
     <view class="box-shadow"></view>
     
     <!-- 签名 -->
-    <view class="userInfo-item" bindtap="navigatorToUserItem" data-field="sign">
+    <view class="userInfo-item sign-item" bindtap="navigatorToUserItem" data-field="sign">
       <view class="item-left">{{sign}}</view>
       <view class="item-right">
         <view class="sign">

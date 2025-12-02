@@ -63,6 +63,40 @@
   border-bottom: 1px solid #e5e6eb;
 }
 
+/* Tab 区域 */
+.tab-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #fff;
+  border-bottom: 1px solid #e5e6eb;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px 0;
+  font-size: 14px;
+  color: #666;
+  position: relative;
+}
+
+.tab.active {
+  color: #337eff;
+  font-weight: 600;
+}
+
+.tab.active::after {
+  content: "";
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: -1px;
+  height: 2px;
+  background-color: #337eff;
+  border-radius: 2px;
+}
+
 .search-box {
   display: flex;
   align-items: center;
@@ -399,6 +433,23 @@
   border-color: #404040;
 }
 
+.forward-modal.dark .tab-section {
+  background-color: #2c2c2c;
+  border-color: #404040;
+}
+
+.forward-modal.dark .tab {
+  color: #ccc;
+}
+
+.forward-modal.dark .tab.active {
+  color: #4c8dff;
+}
+
+.forward-modal.dark .tab.active::after {
+  background-color: #4c8dff;
+}
+
 .forward-modal.dark .search-box {
   background-color: #404040;
   border-color: #555;
@@ -419,4 +470,57 @@
 .forward-modal.dark .header-close:active,
 .forward-modal.dark .footer-cancel:active {
   background-color: #404040;
+}
+.comment-stage {
+  padding: 16px 20px;
+}
+
+.forward-desc {
+  font-size: 14px;
+  color: #000;
+  background-color: #f2f4f5;
+  margin: 10px 0;
+  padding: 0 12px;
+  line-height: 28px;
+  border-radius: 4px;
+}
+
+/* 留言阶段选中目标样式 */
+.comment-target {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  margin: 0 10px 8px;
+}
+
+.comment-target-info {
+  margin-left: 10px;
+  min-width: 0;
+}
+
+.comment-target-name {
+  font-size: 14px;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.comment-section .comment-input {
+  height: 32px;
+  line-height: 32px;
+  border: 1px solid #e1e6e8;
+  border-radius: 4px;
+  padding: 5px 8px;
+  box-sizing: content-box;
+}
+
+.forward-modal.dark .comment-target-name {
+  color: #fff;
+}
+
+.forward-modal.dark .comment-section .comment-input {
+  background-color: #2c2c2c;
+  border-color: #404040;
+  color: #fff;
 }

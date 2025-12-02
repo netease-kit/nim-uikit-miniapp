@@ -78,6 +78,12 @@ Component({
               title: '复制成功',
               icon: 'success'
             })
+          },
+          fail: () => {
+            wx.showToast({
+              title: '复制失败',
+              icon: 'none'
+            })
           }
         })
       }
@@ -85,12 +91,24 @@ Component({
     },
 
     handleReply() {
-      this.triggerEvent('replyMsg', { msg: this.properties.msg })
+      const msg = this.properties.msg
+      const failed = !!(msg && (msg.sendingState === 2 || (msg.messageStatus && msg.messageStatus.errorCode !== 200)))
+      if (failed) {
+        this.hideActionMenu()
+        return
+      }
+      this.triggerEvent('replyMsg', { msg })
       this.hideActionMenu()
     },
 
     handleForward() {
-      this.triggerEvent('forwardMsg', { msg: this.properties.msg })
+      const msg = this.properties.msg
+      const failed = !!(msg && (msg.sendingState === 2 || (msg.messageStatus && msg.messageStatus.errorCode !== 200)))
+      if (failed) {
+        this.hideActionMenu()
+        return
+      }
+      this.triggerEvent('forwardMsg', { msg })
       this.hideActionMenu()
     },
 

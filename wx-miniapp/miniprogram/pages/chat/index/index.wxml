@@ -4,6 +4,7 @@
     conversation-id="{{conversationId}}"
     team-msg-receipt-visible="{{teamMsgReceiptVisible}}"
     p2p-msg-receipt-visible="{{p2pMsgReceiptVisible}}"
+    disable-input="{{disableInput}}"
     bind:setting="onSetting"
     bind:message-click="onMessageClick"
     bind:avatar-click="onAvatarClick"

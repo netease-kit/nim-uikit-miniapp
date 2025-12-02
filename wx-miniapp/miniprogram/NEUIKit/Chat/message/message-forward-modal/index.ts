@@ -4,6 +4,10 @@ Component({
       type: Boolean,
       value: false
     },
+    forwardFromNick: {
+      type: String,
+      value: ''
+    },
     teams: {
       type: Array,
       value: []
@@ -30,7 +34,11 @@ Component({
     searchText: '',
     selectedContacts: [] as any[],
     filteredTeams: [] as any[],
-    filteredFriends: [] as any[]
+    filteredFriends: [] as any[],
+    comment: '',
+    stage: 'select',
+    currentTab: 'friend',
+    selectedTarget: null as any
   },
 
   observers: {
@@ -51,6 +59,7 @@ Component({
     // 初始化弹窗
     initModal() {
       const { teams, friends } = this.data;
+      this.setData({ stage: 'select', currentTab: 'friend', selectedTarget: null, comment: '' })
       this.filterContacts(teams, friends, '');
     },
     
@@ -60,7 +69,11 @@ Component({
         searchText: '',
         selectedContacts: [],
         filteredTeams: [],
-        filteredFriends: []
+        filteredFriends: [],
+        comment: '',
+        stage: 'select',
+        currentTab: 'friend',
+        selectedTarget: null
       });
     },
     
@@ -139,10 +152,8 @@ Component({
       const { multiSelect, selectedContacts } = this.data;
       
       if (!multiSelect) {
-        // 单选模式，直接确认
-        this.triggerEvent('confirm', {
-          contacts: [contact]
-        });
+        // 单选模式，进入留言阶段
+        this.setData({ selectedTarget: contact, stage: 'comment' })
         return;
       }
       
@@ -164,6 +175,24 @@ Component({
       const { teams, friends, searchText } = this.data;
       this.filterContacts(teams, friends, searchText);
     },
+
+    // 留言输入
+    handleCommentInput(e: any) {
+      const comment = e.detail.value
+      this.setData({ comment })
+    },
+
+    // 切换Tab
+    handleTabChange(e: any) {
+      const tab = e.currentTarget.dataset.tab
+      if (!tab) return
+      this.setData({ currentTab: tab })
+    },
+
+    // 返回到选择阶段
+    handleBackToSelect() {
+      this.setData({ stage: 'select', selectedTarget: null, comment: '' })
+    },
     
     // 移除已选择的联系人
     handleRemoveContact(e: any) {
@@ -184,19 +213,34 @@ Component({
     
     // 确认选择
     handleConfirm() {
-      const { selectedContacts } = this.data;
+      const { selectedContacts, comment, stage, selectedTarget, multiSelect } = this.data;
       
-      if (selectedContacts.length === 0) {
+      if (multiSelect) {
+        if (selectedContacts.length === 0) {
+          wx.showToast({
+            title: '请选择转发对象',
+            icon: 'none'
+          });
+          return;
+        }
+        this.triggerEvent('confirm', {
+          contacts: selectedContacts,
+          comment
+        });
+        return
+      }
+
+      if (stage === 'comment' && selectedTarget) {
+        this.triggerEvent('confirm', {
+          contacts: [selectedTarget],
+          comment
+        })
+      } else {
         wx.showToast({
           title: '请选择转发对象',
           icon: 'none'
-        });
-        return;
+        })
       }
-      
-      this.triggerEvent('confirm', {
-        contacts: selectedContacts
-      });
     },
     
     // 关闭弹窗

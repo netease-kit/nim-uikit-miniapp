@@ -12,14 +12,15 @@
 
 .control-buttons {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 16px;
   align-items: center;
-  margin-top: 16px;
+  margin: 8px;
 }
 
 .emoji-scroll {
   flex: 1;
-  height: 100%;
+  height: calc(100% - 52px);
 }
 
 .emoji-block {
@@ -29,8 +30,11 @@
 }
 
 .emoji-row {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(7, 40px);
+  column-gap: 12px;
+  row-gap: 12px;
+  justify-content: start;
   margin-bottom: 12px;
 }
 

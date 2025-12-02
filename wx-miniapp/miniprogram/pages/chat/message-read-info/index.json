@@ -1,8 +1,11 @@
 {
-  "usingComponents": {
-    "message-read-info": "/NEUIKit/Chat/message-read-info/index"
-  },
-  "navigationBarTitleText": "消息已读详情",
+  "navigationStyle": "custom",
+  "backgroundColor": "#f5f5f5",
+  "backgroundTextStyle": "dark",
   "enablePullDownRefresh": true,
-  "onReachBottomDistance": 50
+  "onReachBottomDistance": 50,
+  "usingComponents": {
+    "icon": "/NEUIKit/basic-components/icon/icon",
+    "message-avatar": "/NEUIKit/Chat/message/message-avatar/index"
+  }
 }

@@ -7,7 +7,8 @@ Page({
     theme: 'light',
     conversationId: '',
     teamMsgReceiptVisible: true,
-    p2pMsgReceiptVisible: true
+    p2pMsgReceiptVisible: true,
+    disableInput: false
   },
 
   /**
@@ -32,6 +33,14 @@ Page({
       this.setData({
         p2pMsgReceiptVisible: options.p2pMsgReceiptVisible === 'true'
       });
+    }
+    if (options.disableInput !== undefined) {
+      this.setData({
+        disableInput: options.disableInput === 'true'
+      });
+    }
+    if (options.viewMode && options.viewMode === 'replyDetail') {
+      this.setData({ disableInput: true })
     }
     
     // 获取系统主题

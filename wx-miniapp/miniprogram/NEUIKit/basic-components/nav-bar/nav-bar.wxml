@@ -1,7 +1,7 @@
 <view class="nav-bar-container {{customClass}}" style="{{customStyle}}">
   <view 
     class="nav-bar-wrapper" 
-    style="background-color: {{backgroundColor || '#ffffff'}}; {{backgroundImage ? 'background-image: url(' + backgroundImage + ');' : ''}} height: 48px; align-items: center;"
+    style="background-color: {{backgroundColor || '#ffffff'}}; {{backgroundImage ? 'background-image: url(' + backgroundImage + ');' : ''}}"
   >
     <!-- 左侧区域 -->
     <view class="nav-bar-left">

@@ -278,6 +278,11 @@ Component({
       this.triggerEvent('forwardMsg', e.detail);
     },
 
+    // 处理重发消息
+    handleResendMsg(e: any) {
+      this.triggerEvent('resendMsg', e.detail);
+    },
+
     // 处理头像点击事件
     handleAvatarClick(e: any) {
       this.triggerEvent('avatarClick', e.detail);

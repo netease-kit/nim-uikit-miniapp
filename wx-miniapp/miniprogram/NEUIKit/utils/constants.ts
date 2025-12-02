@@ -1,5 +1,5 @@
 import { t } from "./i18n";
-import { V2NIMConst } from "nim-web-sdk-ng/dist/esm/nim";
+const { V2NIMConst } = require("../../../libs/NIM_MINIAPP_SDK.js");
 
 // 自定义的一些事件常量
 export const events: { [key: string]: string } = {

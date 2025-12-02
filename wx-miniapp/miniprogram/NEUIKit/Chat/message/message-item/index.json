@@ -9,6 +9,7 @@
     "message-video": "../message-video/index",
     "message-file": "../message-file/index",
     "message-notification": "../message-notification/index",
-    "icon": "../../../basic-components/icon/icon"
+    "icon": "../../../basic-components/icon/icon",
+    "message-read": "../message-read/index"
   }
 }

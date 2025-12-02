@@ -56,4 +56,50 @@
       <text class="loading-text">{{loadingText}}</text>
     </view>
   </view>
+
+  <!-- 群名称编辑弹窗（textarea） -->
+  <view class="edit-modal-overlay" wx:if="{{showNameEdit}}" bindtap="closeNameEdit">
+    <view class="edit-modal-content" catchtap="stopPropagation">
+      <view class="edit-title">修改群名称</view>
+      <textarea 
+        class="edit-textarea"
+        placeholder="请输入群名称"
+        value="{{editNameValue}}"
+        bindinput="handleNameInput"
+        maxlength="30"
+        auto-height="true"
+        focus="{{canEditName}}"
+        disabled="{{!canEditName}}"
+      />
+      <view class="edit-count">{{editNameValue.length}}/30</view>
+      <view class="edit-actions">
+        <view class="edit-button cancel" bindtap="closeNameEdit">取消</view>
+        <view class="edit-button confirm" wx:if="{{canEditName}}" bindtap="confirmNameEdit">确定</view>
+        <view class="edit-button confirm disabled" wx:else>确定</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 群介绍编辑弹窗（textarea） -->
+  <view class="edit-modal-overlay" wx:if="{{showIntroEdit}}" bindtap="closeIntroEdit">
+    <view class="edit-modal-content" catchtap="stopPropagation">
+      <view class="edit-title">修改群介绍</view>
+      <textarea 
+        class="edit-textarea"
+        placeholder="请输入群介绍"
+        value="{{editIntroValue}}"
+        bindinput="handleIntroInput"
+        maxlength="100"
+        auto-height="true"
+        focus="{{canEditIntro}}"
+        disabled="{{!canEditIntro}}"
+      />
+      <view class="edit-count">{{editIntroValue.length}}/100</view>
+      <view class="edit-actions">
+        <view class="edit-button cancel" bindtap="closeIntroEdit">取消</view>
+        <view class="edit-button confirm" wx:if="{{canEditIntro}}" bindtap="confirmIntroEdit">确定</view>
+        <view class="edit-button confirm disabled" wx:else>确定</view>
+      </view>
+    </view>
+  </view>
 </view>

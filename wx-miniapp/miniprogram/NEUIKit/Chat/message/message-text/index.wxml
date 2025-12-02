@@ -1,4 +1,4 @@
-<view class="msg-text" style="font-size: {{fontSize || 16}}px;">
+<view class="msg-text {{singleLine ? 'msg-text--single' : ''}}" style="font-size: {{fontSize || 16}}px;">
   <block wx:for="{{textArr}}" wx:key="key">
     <block wx:if="{{item.type === 'text'}}">
       <text class="msg-text">{{item.value}}</text>

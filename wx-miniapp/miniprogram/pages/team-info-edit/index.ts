@@ -6,7 +6,13 @@ Page({
     loadingText: '加载中...',
     statusBarHeight: 0,
     avatarColor: '#ccc',
-    displayName: '群'
+    displayName: '群',
+    showNameEdit: false,
+    showIntroEdit: false,
+    editNameValue: '',
+    editIntroValue: '',
+    canEditName: true,
+    canEditIntro: true
   },
 
   onLoad(options: any) {    
@@ -98,7 +104,10 @@ Page({
    * 点击头像
    */
   async handleAvatarClick() {
-    // 跳转到头像编辑页面
+    const hasPermission = await this.checkEditPermission()
+    if (!hasPermission) {
+      return
+    }
     wx.navigateTo({
       url: `/pages/team-avatar-edit/index?teamId=${this.data.teamId}`
     })
@@ -110,23 +119,9 @@ Page({
    * 点击群名称
    */
   async handleNameClick() {
-    // 检查权限
     const hasPermission = await this.checkEditPermission()
-    if (!hasPermission) {
-      return
-    }
-
-    wx.showModal({
-      title: '修改群名称',
-      editable: true,
-      placeholderText: '请输入群名称',
-      content: (this.data.team && this.data.team.name) ? this.data.team.name : '',
-      success: (res) => {
-        if (res.confirm && res.content) {
-          this.updateTeamName(res.content.trim())
-        }
-      }
-    })
+    this.setData({ canEditName: !!hasPermission })
+    this.showNameEditModal((this.data.team && this.data.team.name) ? this.data.team.name : '')
   },
 
   /**
@@ -140,6 +135,8 @@ Page({
 
     if (name.length > 30) {
       this.showError('群名称不能超过30个字符')
+      const truncated = name.slice(0, 30)
+      this.showNameEditModal(truncated)
       return
     }
 
@@ -196,31 +193,19 @@ Page({
    * 点击群介绍
    */
   async handleIntroClick() {
-    // 检查权限
     const hasPermission = await this.checkEditPermission()
-    if (!hasPermission) {
-      return
-    }
-
-    wx.showModal({
-      title: '修改群介绍',
-      editable: true,
-      placeholderText: '请输入群介绍',
-      content: (this.data.team && this.data.team.intro) ? this.data.team.intro : '',
-      success: (res) => {
-        if (res.confirm) {
-          this.updateTeamIntro((res.content && res.content.trim) ? res.content.trim() : '')
-        }
-      }
-    })
+    this.setData({ canEditIntro: !!hasPermission })
+    this.showIntroEditModal((this.data.team && this.data.team.intro) ? this.data.team.intro : '')
   },
 
   /**
    * 更新群介绍
    */
   async updateTeamIntro(intro: string) {
-    if (intro.length > 200) {
-      this.showError('群介绍不能超过200个字符')
+    if (intro.length > 100) {
+      this.showError('群介绍不能超过100个字符')
+      const truncated = intro.slice(0, 100)
+      this.showIntroEditModal(truncated)
       return
     }
 
@@ -274,6 +259,66 @@ Page({
     }
   },
 
+  showNameEditModal(content: string) {
+    this.setData({
+      showNameEdit: true,
+      editNameValue: content || ''
+    })
+  },
+
+  showIntroEditModal(content: string) {
+    this.setData({
+      showIntroEdit: true,
+      editIntroValue: content || ''
+    })
+  },
+
+  handleNameInput(e: any) {
+    let value = (e && e.detail && e.detail.value) ? e.detail.value : ''
+    if (value.length > 30) {
+      value = value.slice(0, 30)
+    }
+    this.setData({ editNameValue: value })
+  },
+
+  handleIntroInput(e: any) {
+    let value = (e && e.detail && e.detail.value) ? e.detail.value : ''
+    if (value.length > 100) {
+      value = value.slice(0, 100)
+    }
+    this.setData({ editIntroValue: value })
+  },
+
+  closeNameEdit() {
+    this.setData({ showNameEdit: false })
+  },
+
+  closeIntroEdit() {
+    this.setData({ showIntroEdit: false })
+  },
+
+  confirmNameEdit() {
+    if (!this.data.canEditName) {
+      return
+    }
+    const value = (this.data.editNameValue || '').trim()
+    if (!value) {
+      this.showError('群名称不能为空')
+      return
+    }
+    this.updateTeamName(value)
+    this.setData({ showNameEdit: false })
+  },
+
+  confirmIntroEdit() {
+    if (!this.data.canEditIntro) {
+      return
+    }
+    const value = (this.data.editIntroValue || '').trim()
+    this.updateTeamIntro(value)
+    this.setData({ showIntroEdit: false })
+  },
+
   /**
    * 检查编辑权限
    */
@@ -318,10 +363,10 @@ Page({
       )
 
       if (!isOwner && !isManager) {
-        wx.showToast({
-          title: '您无权限修改',
-          icon: 'error'
-        })
+        // wx.showToast({
+        //   title: '您无权限修改',
+        //   icon: 'error'
+        // })
         return false
       }
 

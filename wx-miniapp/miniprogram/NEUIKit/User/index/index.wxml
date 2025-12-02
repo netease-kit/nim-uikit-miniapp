@@ -3,13 +3,15 @@
   <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
   
   <!-- 用户卡片区域 -->
-  <view class="card-wrapper" bindtap="gotoMyDetail">
-    <user-card 
-      account="{{myUserInfo && myUserInfo.accountId}}"
-      nick="{{myUserInfo && myUserInfo.name}}"
-      avatar="{{myUserInfo && myUserInfo.avatar}}"
-    ></user-card>
-    <icon class="arrow" type="icon-jiantou" size="{{16}}" color="#A6ADB6"></icon>
+  <view class="card-wrapper" catchtap="gotoMyDetail">
+    <view catchtap="gotoMyDetail">
+      <user-card 
+        account="{{myUserInfo && myUserInfo.accountId}}"
+        nick="{{myUserInfo && myUserInfo.name}}"
+        avatar="{{myUserInfo && myUserInfo.avatar}}"
+      ></user-card>
+    </view>
+    <icon class="arrow" type="icon-jiantou" size="{{16}}" color="#A6ADB6" catchtap="gotoMyDetail"></icon>
   </view>
   
   <!-- 分隔阴影 -->

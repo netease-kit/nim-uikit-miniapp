@@ -27,7 +27,9 @@ Component({
     unreadUsers: [] as any[],
     activeTab: 'read',
     formatTime: '',
-    isEmpty: false
+    isEmpty: false,
+    rotateDeg: 0,
+    isAllRead: false
   },
 
   observers: {
@@ -55,7 +57,9 @@ Component({
         this.setData({
           readUsers: [],
           unreadUsers: [],
-          isEmpty: true
+          isEmpty: true,
+          rotateDeg: 0,
+          isAllRead: false
         });
         return;
       }
@@ -90,10 +94,15 @@ Component({
       
       const isEmpty = processedReadUsers.length === 0 && processedUnreadUsers.length === 0;
       
+      const rotateDeg = this.getRotateDeg(readInfo);
+      const isAllRead = this.isAllRead();
+
       this.setData({
         readUsers: processedReadUsers,
         unreadUsers: processedUnreadUsers,
-        isEmpty
+        isEmpty,
+        rotateDeg,
+        isAllRead
       });
     },
     
@@ -115,58 +124,14 @@ Component({
       return user.avatar || '';
     },
     
-    // 获取已读状态图标
-    getReadStatusIcon(): string {
-      const { readInfo } = this.data;
-      if (!readInfo) {
-        return 'clock';
-      }
-      
-      const { readCount = 0, totalCount = 0 } = readInfo;
-      
-      if (readCount === 0) {
-        return 'clock';
-      } else if (readCount === totalCount) {
-        return 'check-all';
-      } else {
-        return 'check';
-      }
-    },
-    
-    // 获取已读状态颜色
-    getReadStatusColor(): string {
-      const { readInfo } = this.data;
-      if (!readInfo) {
-        return '#999';
-      }
-      
-      const { readCount = 0, totalCount = 0 } = readInfo;
-      
-      if (readCount === 0) {
-        return '#999';
-      } else if (readCount === totalCount) {
-        return '#34c759';
-      } else {
-        return '#007aff';
-      }
-    },
-    
-    // 获取已读状态文本
-    getReadStatusText(): string {
-      const { readInfo } = this.data;
-      if (!readInfo) {
-        return '未读';
-      }
-      
-      const { readCount = 0, totalCount = 0 } = readInfo;
-      
-      if (readCount === 0) {
-        return '未读';
-      } else if (readCount === totalCount) {
-        return '已读';
-      } else {
-        return `${readCount}/${totalCount}已读`;
-      }
+    // 计算旋转角度，用于CSS扇形显示
+    getRotateDeg(readInfo: any): number {
+      if (!readInfo) return 0;
+      const { readCount = 0, unreadCount = 0, totalCount = 0 } = readInfo;
+      const total = totalCount || (readCount + unreadCount);
+      if (!total) return 0;
+      const percentage = readCount / total;
+      return Math.round(percentage * 360);
     },
     
     // 格式化已读时间

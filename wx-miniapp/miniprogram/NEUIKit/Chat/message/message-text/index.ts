@@ -6,17 +6,21 @@ interface Match {
   key: string
 }
 
-Component({
-  properties: {
-    msg: {
-      type: Object,
-      value: {}
+  Component({
+    properties: {
+      msg: {
+        type: Object,
+        value: {}
+      },
+      fontSize: {
+        type: Number,
+        value: 16
+      },
+      singleLine: {
+        type: Boolean,
+        value: false
+      }
     },
-    fontSize: {
-      type: Number,
-      value: 16
-    }
-  },
 
   data: {
     textArr: [] as Match[],

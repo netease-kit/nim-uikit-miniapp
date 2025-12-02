@@ -64,6 +64,15 @@ Component({
     }
   },
 
+  pageLifetimes: {
+    show() {
+      const accountId = this.data.accountId
+      if (accountId) {
+        this.loadUserInfo(accountId)
+      }
+    }
+  },
+
   observers: {
     'accountId': function(accountId: string) {
       if (accountId) {
@@ -99,8 +108,8 @@ Component({
           return
         }
         
-        // 获取用户信息
-        const userInfo = await store.userStore.getUserForceActive(accountId)
+        // 重新获取用户信息（强制最新）
+        const [userInfo] = await store.userStore.getUserListFromCloudActive([accountId])
         
         // 获取关系信息
         const relationInfo = store.uiStore.getRelation(accountId)
@@ -116,7 +125,8 @@ Component({
           alias
         })
         
-        // 监听数据变化
+        // 监听数据变化（避免重复，先清理再设置）
+        this.cleanup()
         this.setupWatchers(accountId)
         
       } catch (error) {
@@ -328,7 +338,7 @@ Component({
         }
         
         await store.friendStore.addFriendActive(accountId, {
-          addMode: V2NIMConst.V2NIMFriendAddMode.V2NIM_FRIEND_MODE_TYPE_APPLY,
+          addMode: 2,
           postscript: ''
         })
         

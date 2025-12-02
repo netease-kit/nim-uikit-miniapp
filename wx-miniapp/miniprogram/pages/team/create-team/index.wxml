@@ -48,11 +48,11 @@
   <!-- 创建按钮 -->
   <view class="create-btn-container">
     <button 
-      class="create-btn {{canCreate ? 'active' : 'disabled'}}" 
+      class="create-btn {{(canCreate && !creating) ? 'active' : 'disabled'}}" 
       bindtap="createTeam"
-      disabled="{{!canCreate}}"
+      disabled="{{!canCreate || creating}}"
     >
-      创建群聊
+      {{creating ? '创建中...' : '创建群聊'}}
     </button>
   </view>
 </view>

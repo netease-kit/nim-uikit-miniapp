@@ -113,7 +113,8 @@ Component({
             relation,
             searchResState: 'searchResult'
           })
-        }
+          this.setupRelationWatcher(user.accountId)
+          }
       } catch (error) {
         this.setData({
           searchResState: 'searchEmpty'
@@ -123,6 +124,27 @@ Component({
           icon: 'none'
         })
       }
+    },
+
+    setupRelationWatcher(accountId: string) {
+      try {
+        const store = (this as any).storeInstance
+        if (!store || !accountId) return
+        if (this.data.relationDisposer) {
+          this.data.relationDisposer()
+          this.setData({ relationDisposer: null })
+        }
+        const disposer = autorun(() => {
+          try {
+            const relInfo = store.uiStore && store.uiStore.getRelation ? store.uiStore.getRelation(accountId) : null
+            const nextRel = relInfo && relInfo.relation ? relInfo.relation : 'stranger'
+            if (nextRel !== this.data.relation) {
+              this.setData({ relation: nextRel })
+            }
+          } catch {}
+        })
+        this.setData({ relationDisposer: disposer })
+      } catch {}
     },
 
     // 添加好友

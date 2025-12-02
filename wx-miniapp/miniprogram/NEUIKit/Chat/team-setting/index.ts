@@ -62,7 +62,9 @@ Component({
     showDismissButton: false,
     showLeaveButton: false,
     avatarColor: '#ccc',
-    displayName: '群'
+    displayName: '群',
+    editNicknameVisible: false,
+    editNicknameValue: ''
   },
 
   observers: {
@@ -403,8 +405,10 @@ Component({
      * 验证输入数据
      */
     validateInput(value: string, type: 'name' | 'intro' | 'nickname'): { valid: boolean; message?: string } {
-      if (!value || value.trim() === '') {
-        return { valid: false, message: '内容不能为空' };
+      if (type !== 'nickname') {
+        if (!value || value.trim() === '') {
+          return { valid: false, message: '内容不能为空' };
+        }
       }
 
       switch (type) {
@@ -419,8 +423,8 @@ Component({
           }
           break;
         case 'nickname':
-          if (value.length > 20) {
-            return { valid: false, message: '昵称不能超过20个字符' };
+          if (value && value.length > 15) {
+            return { valid: false, message: '昵称不能超过15个字符' };
           }
           break;
       }
@@ -576,23 +580,33 @@ Component({
      */
     handleEditMyNickname() {
       const { myNickname } = this.data;
-      wx.showModal({
-        title: '修改群昵称',
-        editable: true,
-        placeholderText: '请输入群昵称',
-        content: myNickname || '',
-        success: (res) => {
-          if (res.confirm) {
-            const validation = this.validateInput(res.content || '', 'nickname');
-            if (!validation.valid) {
-              this.showError(validation.message || '输入无效');
-              return;
-            }
-            this.updateMyNickname(res.content || '');
-          }
-        }
+      this.setData({
+        editNicknameVisible: true,
+        editNicknameValue: myNickname || ''
       });
     },
+
+    onEditNicknameInputUpdate(e: any) {
+      const { value } = e.detail || {};
+      this.setData({ editNicknameValue: value || '' });
+    },
+
+    closeEditNickname() {
+      this.setData({ editNicknameVisible: false });
+    },
+
+    async confirmEditNickname() {
+      const value = (this.data.editNicknameValue || '').trim();
+      const validation = this.validateInput(value, 'nickname');
+      if (!validation.valid) {
+        this.showError(validation.message || '输入无效');
+        return;
+      }
+      await this.updateMyNickname(value);
+      this.setData({ editNicknameVisible: false });
+    },
+
+    stopPropagation() {},
 
     /**
      * 处理消息提醒开关
@@ -930,7 +944,7 @@ Component({
           .filter((item: any) => item.memberRole === 1) // V2NIM_TEAM_MEMBER_ROLE_MANAGER
           .some((member: any) => (member.accountId && myUser && myUser.accountId) ? member.accountId === myUser.accountId : false);
         
-        const canAddMember = (team && team.inviteMode === 0) || isTeamOwner || isTeamManager; // V2NIM_TEAM_INVITE_MODE_ALL
+        const canAddMember = isTeamOwner || isTeamManager;
         
         // 获取当前用户在群里的信息
         const currentMember = teamMembers.find((member: any) => (member.accountId && myUser && myUser.accountId) ? member.accountId === myUser.accountId : false);

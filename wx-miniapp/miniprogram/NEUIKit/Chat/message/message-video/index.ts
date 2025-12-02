@@ -38,6 +38,9 @@ Component({
           // 如果没有缩略图和封面，使用视频URL获取首帧
           const url = attachment.url;
           coverUrl = `${url}${url.includes('?') ? '&' : '?'}vframe=1`;
+        } else if (msg.previewImg) {
+          // 发送阶段或失败阶段的本地预览图
+          coverUrl = msg.previewImg;
         }
 
         // 格式化视频时长

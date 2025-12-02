@@ -1,10 +1,89 @@
-<view class="message-read-info-page">
-  <message-read-info 
-    theme="{{theme}}"
-    message-id="{{messageId}}"
-    conversation-id="{{conversationId}}"
-    bind:refresh="onRefresh"
-    bind:export="onExport"
-    bind:user-click="onUserClick"
-  />
+<view class="message-read-info-page" data-theme="{{theme}}">
+  <!-- 导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-content">
+      <view class="nav-left" bindtap="handleBack">
+        <icon type="icon-zuojiantou" size="20" color="#333333" />
+      </view>
+      <view class="nav-title">消息已读详情</view>
+      <view class="nav-right"></view>
+    </view>
+  </view>
+  <!-- 标签页 -->
+  <view class="read-info-tabs">
+    <view 
+      class="tab-item {{selectedType === 'read' ? 'active' : ''}}" 
+      data-type="read" 
+      bindtap="handleTypeChange"
+    >
+      已读 ({{readCount}})
+    </view>
+    <view 
+      class="tab-item {{selectedType === 'unread' ? 'active' : ''}}" 
+      data-type="unread" 
+      bindtap="handleTypeChange"
+    >
+      未读 ({{unReadCount}})
+    </view>
+  </view>
+
+  <!-- 列表区域 -->
+  <view class="read-info-list">
+    <!-- 已读列表 -->
+    <view class="user-list" wx:if="{{selectedType === 'read'}}">
+      <view 
+        class="user-item" 
+        wx:for="{{readUsers}}" 
+        wx:key="account"
+        data-account="{{item.account}}"
+      >
+        <view class="user-avatar">
+          <message-avatar 
+            account="{{item.account}}" 
+            size="40" 
+            theme="{{theme}}"
+          />
+        </view>
+        <view class="user-info">
+          <view class="user-name">{{item.nick}}</view>
+        </view>
+      </view>
+      <view class="empty-state" wx:if="{{readUsers.length === 0}}">
+        <view class="empty-text">全部成员未读</view>
+      </view>
+    </view>
+
+    <!-- 未读列表 -->
+    <view class="user-list" wx:if="{{selectedType === 'unread'}}">
+      <view 
+        class="user-item" 
+        wx:for="{{unReadUsers}}" 
+        wx:key="account"
+        data-account="{{item.account}}"
+      >
+        <view class="user-avatar">
+          <message-avatar 
+            account="{{item.account}}" 
+            size="40" 
+            theme="{{theme}}"
+          />
+        </view>
+        <view class="user-info">
+          <view class="user-name">{{item.nick}}</view>
+        </view>
+      </view>
+      <view class="empty-state" wx:if="{{unReadUsers.length === 0}}">
+        <view class="empty-text">全部已读</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载与错误 -->
+  <view class="loading-state" wx:if="{{loading}}">
+    <view class="loading-text">加载中...</view>
+  </view>
+  <view class="error-state" wx:if="{{errorMessage}}">
+    <view class="error-text">{{errorMessage}}</view>
+    <view class="error-retry" bindtap="onRefresh">重试</view>
+  </view>
 </view>

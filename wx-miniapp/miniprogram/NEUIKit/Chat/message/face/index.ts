@@ -30,11 +30,11 @@ Component({
     },
 
     onDeleteClick() {
-      this.triggerEvent('deleteClick')
+      this.triggerEvent('emojiDelete')
     },
 
     onSendClick() {
-      this.triggerEvent('sendClick')
+      this.triggerEvent('emojiSend')
     }
   }
 })

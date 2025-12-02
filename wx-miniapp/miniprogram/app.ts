@@ -5,6 +5,7 @@ const { V2NIMConst, default: V2NIM } = require("./libs/NIM_MINIAPP_SDK.js");
 // const { NIM: V2NIM, V2NIMConst } = require("./libs/NIM_FROM_BUILD.js");
 
 const { default: RootStore } = require("./libs/store.js");
+import { autorun } from "./libs/store.js";
 
 // 类型定义
 interface V2NIMMessage {
@@ -17,6 +18,11 @@ interface V2NIMMessage {
 interface IAppOptionExtended extends IAppOption {
   checkLoginStatus(): void;
   initIMLogin(imAccid: string, imToken: string): void;
+  isTabBarPage(): boolean;
+  syncTabBarRedDot(): void;
+  setupStore(): void;
+  populateInitialData(): void;
+  resetIMCore(): void;
 }
 
 const APP_KEY = "3e215d27b6a6a9e27dad7ef36dd5b65c";
@@ -29,6 +35,71 @@ App<IAppOptionExtended>({
   globalData: {
     nim: null,
     store: null,
+  },
+  isTabBarPage() {
+    try {
+      const pages = getCurrentPages()
+      const cur = pages && pages.length ? pages[pages.length - 1] : null
+      const route = cur && cur.route ? cur.route : ''
+      return (
+        route === 'pages/conversation/conversation-list/index' ||
+        route === 'pages/contacts/index/index'
+      )
+    } catch (e) {
+      return false
+    }
+  },
+  syncTabBarRedDot() {
+    try {
+      if (!this.isTabBarPage()) return
+      const store = this.globalData && this.globalData.store ? this.globalData.store : null
+      const enableV2CloudConversation = (store && store.sdkOptions && store.sdkOptions.enableV2CloudConversation) || false
+      let conversationUnreadCount = 0
+      if (enableV2CloudConversation) {
+        conversationUnreadCount = (store && store.conversationStore && typeof store.conversationStore.totalUnreadCount === 'number') ? store.conversationStore.totalUnreadCount : 0
+        if (conversationUnreadCount === 0 && store && store.conversationStore && store.conversationStore.conversations) {
+          try {
+            const convs = store.conversationStore.conversations
+            const values = convs && convs.values ? convs.values() : []
+            let sum = 0
+            const arr = [] as any[]
+            for (const v of values) arr.push(v)
+            for (let i = 0; i < arr.length; i++) {
+              const c = arr[i]
+              sum += c && typeof c.unreadCount === 'number' ? c.unreadCount : 0
+            }
+            conversationUnreadCount = sum
+          } catch {}
+        }
+      } else {
+        conversationUnreadCount = (store && store.localConversationStore && typeof store.localConversationStore.totalUnreadCount === 'number') ? store.localConversationStore.totalUnreadCount : 0
+        if (conversationUnreadCount === 0 && store && store.localConversationStore && store.localConversationStore.conversations) {
+          try {
+            const convs = store.localConversationStore.conversations
+            const values = convs && convs.values ? convs.values() : []
+            let sum = 0
+            const arr = [] as any[]
+            for (const v of values) arr.push(v)
+            for (let i = 0; i < arr.length; i++) {
+              const c = arr[i]
+              sum += c && typeof c.unreadCount === 'number' ? c.unreadCount : 0
+            }
+            conversationUnreadCount = sum
+          } catch {}
+        }
+      }
+      const contactsUnreadCount = (store && store.sysMsgStore && store.sysMsgStore.getTotalUnreadMsgsCount) ? store.sysMsgStore.getTotalUnreadMsgsCount() || 0 : 0
+      if (conversationUnreadCount > 0) {
+        try { wx.showTabBarRedDot({ index: 0 }) } catch {}
+      } else {
+        try { wx.hideTabBarRedDot({ index: 0 }) } catch {}
+      }
+      if (contactsUnreadCount > 0) {
+        try { wx.showTabBarRedDot({ index: 1 }) } catch {}
+      } else {
+        try { wx.hideTabBarRedDot({ index: 1 }) } catch {}
+      }
+    } catch {}
   },
   onLaunch() {
     const nim = V2NIM.getInstance(
@@ -52,35 +123,12 @@ App<IAppOptionExtended>({
       }
     );
 
-    // 初始化store
-    const store = new RootStore(
-      // @ts-ignore
-      nim,
-      {
-        // 添加好友是否需要验证
-        addFriendNeedVerify: false,
-        // 是否需要显示 p2p 消息、p2p会话列表消息已读未读，默认 false
-        p2pMsgReceiptVisible: true,
-        // 是否需要显示群组消息已读未读，默认 false
-        teamMsgReceiptVisible: true,
-        // 群组被邀请模式，默认需要验证
-        teamAgreeMode:
-          V2NIMConst.V2NIMTeamAgreeMode.V2NIM_TEAM_AGREE_MODE_NO_AUTH,
-        // 发送消息前回调, 可对消息体进行修改，添加自定义参数
-        sendMsgBefore: async (options: {
-          msg: V2NIMMessage;
-          conversationId: string;
-          serverExtension?: Record<string, unknown>;
-        }) => {
-          return { ...options };
-        },
-      },
-      "MiniApp"
-    );
-
-    // 将nim、store挂载到全局
+    // 将nim挂载到全局
     this.globalData.nim = nim;
-    this.globalData.store = store;
+    // 初始化 store 与红点监听器
+    this.setupStore();
+
+    // 红点监听器在 setupStore 中初始化
 
     if (!LOGIN_BY_PHONE_CODE) {
       // OPTION A: 直接登录
@@ -90,6 +138,182 @@ App<IAppOptionExtended>({
       this.checkLoginStatus();
     }
 
+  },
+
+  /**
+   * 初始化并挂载 Store 与相关监听器
+   */
+  setupStore() {
+    try {
+      const nim = this.globalData.nim;
+      if (!nim) return;
+      const store = new RootStore(
+        // @ts-ignore
+        nim,
+        {
+          addFriendNeedVerify: false,
+          p2pMsgReceiptVisible: true,
+          teamMsgReceiptVisible: true,
+          teamAgreeMode:
+            V2NIMConst.V2NIMTeamAgreeMode.V2NIM_TEAM_AGREE_MODE_NO_AUTH,
+          sendMsgBefore: async (options: {
+            msg: V2NIMMessage;
+            conversationId: string;
+            serverExtension?: Record<string, unknown>;
+          }) => {
+            return { ...options };
+          },
+        },
+        "MiniApp"
+      );
+      this.globalData.store = store;
+
+      // 初始化红点监听器
+      const messageTabRedDotDisposer = autorun(async() => {
+        try {
+          const store = (this.globalData && this.globalData.store) ? this.globalData.store : null
+          const enableV2CloudConversation = (store && store.sdkOptions && store.sdkOptions.enableV2CloudConversation) || false
+
+          let conversationUnreadCount = 0
+          if (enableV2CloudConversation) {
+            conversationUnreadCount = (store && store.conversationStore && typeof store.conversationStore.totalUnreadCount === 'number')
+              ? store.conversationStore.totalUnreadCount
+              : 0
+
+            if (conversationUnreadCount === 0 && store && store.conversationStore && store.conversationStore.conversations) {
+              try {
+                const convs = store.conversationStore.conversations
+                const values = convs && convs.values ? convs.values() : []
+                let sum = 0
+                const arr = [] as any[]
+                // @ts-ignore
+                for (const v of values) arr.push(v)
+                for (let i = 0; i < arr.length; i++) {
+                  const c = arr[i]
+                  sum += (c && typeof c.unreadCount === 'number') ? c.unreadCount : 0
+                }
+                conversationUnreadCount = sum
+              } catch {}
+            }
+          } else {
+            conversationUnreadCount = (store && store.localConversationStore && typeof store.localConversationStore.totalUnreadCount === 'number')
+              ? store.localConversationStore.totalUnreadCount
+              : 0
+
+            if (conversationUnreadCount === 0 && store && store.localConversationStore && store.localConversationStore.conversations) {
+              try {
+                const convs = store.localConversationStore.conversations
+                const values = convs && convs.values ? convs.values() : []
+                let sum = 0
+                const arr = [] as any[]
+                // @ts-ignore
+                for (const v of values) arr.push(v)
+                for (let i = 0; i < arr.length; i++) {
+                  const c = arr[i]
+                  sum += (c && typeof c.unreadCount === 'number') ? c.unreadCount : 0
+                }
+                conversationUnreadCount = sum
+              } catch {}
+            }
+          }
+
+          if (this.isTabBarPage()) {
+            if (conversationUnreadCount > 0) {
+              try { wx.showTabBarRedDot({ index: 0 }) } catch {}
+            } else {
+              try { wx.hideTabBarRedDot({ index: 0 }) } catch {}
+            }
+          }
+        } catch (error) {
+          console.error('更新消息tab红点失败', error)
+        }
+      })
+
+      const contactsTabRedDotDisposer = autorun(async() => {
+        try {
+          const store = (this.globalData && this.globalData.store) ? this.globalData.store : null
+          const contactsUnreadCount = (store && store.sysMsgStore && store.sysMsgStore.getTotalUnreadMsgsCount)
+            ? (store.sysMsgStore.getTotalUnreadMsgsCount() || 0)
+            : 0
+          if (this.isTabBarPage()) {
+            if (contactsUnreadCount > 0) {
+              try { wx.showTabBarRedDot({ index: 1 }) } catch {}
+            } else {
+              try { wx.hideTabBarRedDot({ index: 1 }) } catch {}
+            }
+          }
+        } catch {
+          console.error('更新联系人tab红点失败')
+        }
+      })
+
+      // @ts-ignore
+      this.globalData.tabRedDotDisposerMessage = messageTabRedDotDisposer
+      // @ts-ignore
+      this.globalData.tabRedDotDisposerContacts = contactsTabRedDotDisposer
+    } catch {}
+  },
+
+  /**
+   * 重新创建 NIM 与 Store，并更新全局引用
+   */
+  resetIMCore() {
+    try {
+      // 创建新的 NIM 实例
+      const nim = V2NIM.getInstance(
+        {
+          appkey: APP_KEY,
+          needReconnect: true,
+          debugLevel: "debug",
+          apiVersion: "v2",
+          enableV2CloudConversation:
+            wx.getStorageSync('enableV2CloudConversation') === 'on' || false,
+        },
+        {
+          V2NIMLoginServiceConfig: {
+            lbsUrls: ["https://lbs.netease.im/lbs/wxwebconf.jsp"],
+            linkUrl: "wlnimsc0.netease.im",
+          },
+          reporterConfig: {
+            enableCompass: false,
+            compassDataEndpoint: 'https://statistic.live.126.net',
+            isDataReportEnable: false,
+          },
+        }
+      );
+
+      // 更新全局 nim
+      this.globalData.nim = nim;
+      // 重新初始化 Store 与红点监听器
+      this.setupStore();
+      // 主动拉取一次会话列表
+      this.populateInitialData();
+    } catch (error) {
+      console.error('resetIMCore failed', error)
+    }
+  },
+
+  /**
+   * 登录成功后主动拉取会话列表，避免遗漏同步事件导致UI为空
+   */
+  populateInitialData() {
+    try {
+      // @ts-ignore
+      const store = (this.globalData && this.globalData.store) ? this.globalData.store : null
+      if (!store) return
+      const limit = (store.localOptions && store.localOptions.conversationLimit) || 100
+
+      const enableV2CloudConversation = (store.sdkOptions && store.sdkOptions.enableV2CloudConversation) || false
+      if (enableV2CloudConversation) {
+        if (store.conversationStore && store.conversationStore.getConversationListActive) {
+          try { store.conversationStore.getConversationListActive(0, limit) } catch {}
+        }
+      } else {
+        if (store.localConversationStore && store.localConversationStore.getConversationListActive) {
+          try { store.localConversationStore.getConversationListActive(0, limit) } catch {}
+        }
+      }
+    } catch {}
   },
 
   /**
@@ -134,7 +358,11 @@ App<IAppOptionExtended>({
     }
 
     nim.V2NIMLoginService.login(imAccid, imToken).then(() => {
-      // 登录成功后跳转到会话列表页面
+      // 登录成功后，重建 Store 保证不会复用旧账号数据
+      this.setupStore();
+      // 主动拉取会话列表，避免 UI 空白
+      this.populateInitialData();
+      // 跳转到会话列表页面
       wx.reLaunch({
         url: '/pages/conversation/conversation-list/index'
       });

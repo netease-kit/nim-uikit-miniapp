@@ -1,4 +1,4 @@
-import { V2NIMConst } from "nim-web-sdk-ng/dist/esm/nim";
+const { V2NIMConst } = require("../../../libs/NIM_MINIAPP_SDK.js");
 import { t } from "./i18n";
 
 const translate = (key: string): string => {
@@ -32,7 +32,7 @@ const translate = (key: string): string => {
  * @returns 根据消息类型返回的提示内容
  */
 export const getMsgContentTipByType = (msg: {
-  messageType?: V2NIMConst.V2NIMMessageType;
+  messageType?: number;
   text?: string;
 }): string => {
   const { messageType, text } = msg;

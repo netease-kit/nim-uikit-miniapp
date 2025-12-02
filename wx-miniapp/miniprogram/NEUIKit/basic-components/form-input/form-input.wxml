@@ -13,7 +13,7 @@
       maxlength="{{maxlength}}"
     />
     <view class="clear-icon" bindtap="clearInput">
-      <icon wx:if="{{modelValue && allowClear}}" type="clear" size="16" />
+      <icon wx:if="{{modelValue && allowClear}}" type="icon-guanbi" size="16" />
     </view>
     <slot name="addonAfter"></slot>
   </view>
