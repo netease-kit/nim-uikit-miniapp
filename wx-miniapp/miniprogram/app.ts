@@ -25,7 +25,7 @@ interface IAppOptionExtended extends IAppOption {
   resetIMCore(): void;
 }
 
-const APP_KEY = "3e215d27b6a6a9e27dad7ef36dd5b65c";
+const APP_KEY = "replace_your_app_key";
 const LOGIN_BY_PHONE_CODE = true;
 const ACCID = "your_accid";
 const TOKEN = "your_token";
