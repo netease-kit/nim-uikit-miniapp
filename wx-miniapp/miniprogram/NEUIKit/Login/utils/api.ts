@@ -3,7 +3,7 @@ const baseUrl = 'https://yiyong-user-center.netease.im'
 
 const loginByCodeHeader = {
   'Content-Type': 'application/json',
-  'appKey': '3e215d27b6a6a9e27dad7ef36dd5b65c',
+  'appKey': 'replace_your_app_key',
   'parentScope': 2,
   'scope': 7
 }
