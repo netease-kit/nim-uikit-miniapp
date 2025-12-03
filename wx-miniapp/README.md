@@ -2,6 +2,8 @@
 
 在 `miniprogram/app.ts` 下配置项目的 `APP_KEY`, `LOGIN_BY_PHONE_CODE`, `ACCID`, `TOKEN` 等参数.
 
+可全局搜索 “replace_your_app_key” 替换 APP_KEY。
+
 - `APP_KEY`: 项目的 App Key, 从 Nim 控制台获取.
 - `LOGIN_BY_PHONE_CODE`: 是否通过手机验证码登录, 默认值为 `true`.如果不需要通过手机验证码登录, 可以设置为 `false`，同时需要配置 `ACCID` 和 `TOKEN`.
   - `ACCID`: 登录的账号.
